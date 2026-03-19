@@ -1,0 +1,2247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project template="" rstoxversion="1.11" xmlns="http://www.imr.no/formats/stox/v1" lastmodified="13/11/19 11:29" rversion="3.5.3" stoxversion="2.7" resourceversion="1.87">
+  <model name="baseline">
+    <process name="ReadProcessData">
+      <function>ReadProcessData</function>
+      <enabled>true</enabled>
+      <respondingui>false</respondingui>
+      <breakingui>false</breakingui>
+      <output>ProcessData</output>
+    </process>
+    <process name="ReadBioticXML">
+      <function>ReadBioticXML</function>
+      <enabled>true</enabled>
+      <respondingui>false</respondingui>
+      <breakingui>false</breakingui>
+      <fileoutput>false</fileoutput>
+      <parameter name="FileName1">input/biotic/biotic_cruiseNumber_2014202_Johan+Hjort_2019-02-19T20.39.43.790Z.xml</parameter>
+      <parameter name="FileName2">input/biotic/biotic_cruiseNumber_2014805_Helmer+Hanssen_2019-02-19T20.45.39.315Z.xml</parameter>
+      <parameter name="FileName3">input/biotic/biotic_cruiseNumber_0114_2014_UANA_NANSE_Fridtjof+Nansen_2019-02-19T20.51.47.295Z.xml</parameter>
+      <output>BioticData</output>
+    </process>
+    <process name="FilterBiotic">
+      <function>FilterBiotic</function>
+      <enabled>true</enabled>
+      <respondingui>true</respondingui>
+      <breakingui>false</breakingui>
+      <fileoutput>true</fileoutput>
+      <parameter name="BioticData">Process(ReadBioticXML)</parameter>
+      <parameter name="FishStationExpr">gear =~['3270','3271'] and gearcondition &lt; 3 and trawlquality =~['1','3'] and fishstationtype != 2</parameter>
+      <parameter name="CatchExpr">species == '164712'</parameter>
+      <output>BioticData</output>
+    </process>
+    <process name="DefineStrata">
+      <function>DefineStrata</function>
+      <enabled>true</enabled>
+      <respondingui>true</respondingui>
+      <breakingui>true</breakingui>
+      <parameter name="ProcessData">Process(ReadProcessData)</parameter>
+      <parameter name="UseProcessData">true</parameter>
+      <parameter name="FileName">${STOX}/polygon/vintertokt_barentshavny.txt</parameter>
+      <output>ProcessData</output>
+    </process>
+    <process name="StratumArea">
+      <function>StratumArea</function>
+      <enabled>true</enabled>
+      <respondingui>false</respondingui>
+      <breakingui>false</breakingui>
+      <fileoutput>true</fileoutput>
+      <parameter name="ProcessData">Process(ReadProcessData)</parameter>
+      <parameter name="AreaMethod">Accurate</parameter>
+      <output>PolygonArea</output>
+    </process>
+    <process name="DefineSweptAreaPSU">
+      <function>DefineSweptAreaPSU</function>
+      <enabled>true</enabled>
+      <respondingui>true</respondingui>
+      <breakingui>false</breakingui>
+      <parameter name="ProcessData">Process(ReadProcessData)</parameter>
+      <parameter name="BioticData">Process(FilterBiotic)</parameter>
+      <parameter name="Method">Station</parameter>
+      <output>ProcessData</output>
+    </process>
+    <process name="StationLengthDist">
+      <function>StationLengthDist</function>
+      <enabled>true</enabled>
+      <respondingui>false</respondingui>
+      <breakingui>false</breakingui>
+      <fileoutput>true</fileoutput>
+      <parameter name="BioticData">Process(FilterBiotic)</parameter>
+      <parameter name="LengthDistType">NormLengthDist</parameter>
+      <output>LengthDist</output>
+    </process>
+    <process name="Catchability">
+      <function>Catchability</function>
+      <enabled>true</enabled>
+      <respondingui>true</respondingui>
+      <breakingui>false</breakingui>
+      <fileoutput>true</fileoutput>
+      <parameter name="CatchabilityMethod">LengthDependentSweepWidth</parameter>
+      <parameter name="LengthDist">Process(StationLengthDist)</parameter>
+      <parameter name="ParLengthDependentSweepWidth">SpecCat=;Alpha=5.91;Beta=0.43;LMin=15.0;LMax=62.0</parameter>
+      <output>LengthDist</output>
+    </process>
+    <process name="RegroupLengthDist">
+      <function>RegroupLengthDist</function>
+      <enabled>true</enabled>
+      <respondingui>true</respondingui>
+      <breakingui>false</breakingui>
+      <fileoutput>true</fileoutput>
+      <parameter name="LengthDist">Process(Catchability)</parameter>
+      <parameter name="LengthInterval">5.0</parameter>
+      <output>LengthDist</output>
+    </process>
+    <process name="TotalLengthDist">
+      <function>TotalLengthDist</function>
+      <enabled>true</enabled>
+      <respondingui>false</respondingui>
+      <breakingui>false</breakingui>
+      <fileoutput>true</fileoutput>
+      <parameter name="ProcessData">Process(ReadProcessData)</parameter>
+      <parameter name="LengthDist">Process(RegroupLengthDist)</parameter>
+      <output>LengthDist</output>
+    </process>
+    <process name="SweptAreaDensity">
+      <function>SweptAreaDensity</function>
+      <enabled>true</enabled>
+      <respondingui>false</respondingui>
+      <breakingui>false</breakingui>
+      <fileoutput>true</fileoutput>
+      <parameter name="ProcessData">Process(ReadProcessData)</parameter>
+      <parameter name="SweptAreaMethod">LengthDependent</parameter>
+      <parameter name="BioticData">Process(FilterBiotic)</parameter>
+      <parameter name="CatchVariable">Weight</parameter>
+      <parameter name="LengthDist">Process(TotalLengthDist)</parameter>
+      <parameter name="DistanceMethod">FullDistance</parameter>
+      <parameter name="SweepWidthMethod">Predetermined</parameter>
+      <parameter name="SweepWidth">25</parameter>
+      <parameter name="Alpha">5.91</parameter>
+      <parameter name="Beta">0.43</parameter>
+      <parameter name="LMin">15</parameter>
+      <parameter name="LMax">62</parameter>
+      <output>Density</output>
+    </process>
+    <process name="MeanDensity_Stratum">
+      <function>MeanDensity</function>
+      <enabled>true</enabled>
+      <respondingui>false</respondingui>
+      <breakingui>false</breakingui>
+      <fileoutput>true</fileoutput>
+      <parameter name="ProcessData">Process(ReadProcessData)</parameter>
+      <parameter name="Density">Process(SweptAreaDensity)</parameter>
+      <parameter name="SampleUnitType">Stratum</parameter>
+      <output>Density</output>
+    </process>
+    <process name="AbundanceByLength">
+      <function>Abundance</function>
+      <enabled>true</enabled>
+      <respondingui>false</respondingui>
+      <breakingui>false</breakingui>
+      <fileoutput>true</fileoutput>
+      <parameter name="Density">Process(MeanDensity_Stratum)</parameter>
+      <parameter name="PolygonArea">Process(StratumArea)</parameter>
+      <output>Abundance</output>
+    </process>
+    <process name="IndividualDataStations">
+      <function>IndividualDataStations</function>
+      <enabled>true</enabled>
+      <respondingui>false</respondingui>
+      <breakingui>false</breakingui>
+      <fileoutput>true</fileoutput>
+      <parameter name="ProcessData">Process(ReadProcessData)</parameter>
+      <parameter name="Abundance">Process(AbundanceByLength)</parameter>
+      <output>IndividualDataStations</output>
+    </process>
+    <process name="IndividualData">
+      <function>IndividualData</function>
+      <enabled>true</enabled>
+      <respondingui>false</respondingui>
+      <breakingui>false</breakingui>
+      <fileoutput>true</fileoutput>
+      <parameter name="BioticData">Process(FilterBiotic)</parameter>
+      <parameter name="IndividualDataStations">Process(IndividualDataStations)</parameter>
+      <output>IndividualData</output>
+    </process>
+    <process name="SuperIndAbundance">
+      <function>SuperIndAbundance</function>
+      <enabled>true</enabled>
+      <respondingui>false</respondingui>
+      <breakingui>false</breakingui>
+      <fileoutput>true</fileoutput>
+      <parameter name="Abundance">Process(AbundanceByLength)</parameter>
+      <parameter name="IndividualData">Process(IndividualData)</parameter>
+      <parameter name="ProcessData">Process(ReadProcessData)</parameter>
+      <parameter name="AbundWeightMethod">StationDensity</parameter>
+      <parameter name="LengthDist">Process(RegroupLengthDist)</parameter>
+      <output>SuperIndividuals</output>
+    </process>
+    <process name="WriteProcessData">
+      <function>WriteProcessData</function>
+      <enabled>true</enabled>
+      <respondingui>false</respondingui>
+      <breakingui>false</breakingui>
+      <fileoutput>true</fileoutput>
+      <output>ProcessData</output>
+    </process>
+  </model>
+  <model name="r">
+    <process name="runBootstrap">
+      <function>runBootstrap</function>
+      <enabled>true</enabled>
+      <respondingui>false</respondingui>
+      <breakingui>false</breakingui>
+      <parameter name="bootstrapMethod">SweptAreaLength</parameter>
+      <parameter name="acousticMethod">PSU~Stratum</parameter>
+      <parameter name="bioticMethod">PSU~Stratum</parameter>
+      <parameter name="startProcess">Process(TotalLengthDist)</parameter>
+      <parameter name="endProcess">Process(SuperIndAbundance)</parameter>
+      <parameter name="nboot">500</parameter>
+      <parameter name="seed">1</parameter>
+      <parameter name="cores">4</parameter>
+      <output>RObject</output>
+    </process>
+    <process name="imputeByAge">
+      <function>imputeByAge</function>
+      <enabled>true</enabled>
+      <respondingui>true</respondingui>
+      <breakingui>false</breakingui>
+      <parameter name="seed">1</parameter>
+      <parameter name="cores">4</parameter>
+    </process>
+    <process name="saveRImage">
+      <function>saveProjectData</function>
+      <enabled>true</enabled>
+      <respondingui>false</respondingui>
+      <breakingui>false</breakingui>
+    </process>
+  </model>
+  <model name="baseline-report">
+    <process name="FillMissingData">
+      <function>FillMissingData</function>
+      <enabled>true</enabled>
+      <respondingui>false</respondingui>
+      <breakingui>false</breakingui>
+      <fileoutput>true</fileoutput>
+      <parameter name="SuperIndividuals">Process(SuperIndAbundance)</parameter>
+      <parameter name="FillVariables">ImputeByAge</parameter>
+      <parameter name="Seed">1</parameter>
+      <parameter name="FillWeight">Mean</parameter>
+      <parameter name="a">0.01</parameter>
+      <parameter name="b">3.0</parameter>
+      <output>SuperIndividuals</output>
+    </process>
+    <process name="EstimateByPopulationCategory">
+      <function>EstimateByPopulationCategory</function>
+      <enabled>true</enabled>
+      <respondingui>false</respondingui>
+      <breakingui>false</breakingui>
+      <fileoutput>true</fileoutput>
+      <parameter name="SuperIndividuals">Process(FillMissingData)</parameter>
+      <parameter name="LengthInterval">5.0</parameter>
+      <parameter name="Scale">1000</parameter>
+      <parameter name="Dim1">LenGrp</parameter>
+      <parameter name="Dim2">age</parameter>
+      <parameter name="Dim3">SpecCat</parameter>
+      <parameter name="Dim4">none</parameter>
+      <parameter name="Dim5">none</parameter>
+      <output>Reports</output>
+    </process>
+  </model>
+  <model name="r-report">
+    <process name="loadEnv">
+      <function>loadEnv</function>
+      <enabled>true</enabled>
+      <respondingui>false</respondingui>
+      <breakingui>false</breakingui>
+      <output>RObject</output>
+    </process>
+    <process name="getPlots">
+      <function>getPlots</function>
+      <enabled>true</enabled>
+      <respondingui>true</respondingui>
+      <breakingui>false</breakingui>
+      <parameter name="out">all</parameter>
+    </process>
+    <process name="getReports">
+      <function>getReports</function>
+      <enabled>true</enabled>
+      <respondingui>true</respondingui>
+      <breakingui>false</breakingui>
+      <parameter name="out">all</parameter>
+    </process>
+  </model>
+  <processdata>
+    <bioticassignment>
+      <stationweight assignmentid="1" station="2014202/70005">1.0</stationweight>
+      <stationweight assignmentid="2" station="2014202/70006">1.0</stationweight>
+      <stationweight assignmentid="3" station="2014202/70007">1.0</stationweight>
+      <stationweight assignmentid="4" station="2014202/70008">1.0</stationweight>
+      <stationweight assignmentid="5" station="2014202/70009">1.0</stationweight>
+      <stationweight assignmentid="6" station="2014202/70010">1.0</stationweight>
+      <stationweight assignmentid="7" station="2014202/70011">1.0</stationweight>
+      <stationweight assignmentid="8" station="2014202/70012">1.0</stationweight>
+      <stationweight assignmentid="9" station="2014202/70014">1.0</stationweight>
+      <stationweight assignmentid="10" station="2014202/70015">1.0</stationweight>
+      <stationweight assignmentid="11" station="2014202/70016">1.0</stationweight>
+      <stationweight assignmentid="12" station="2014202/70017">1.0</stationweight>
+      <stationweight assignmentid="13" station="2014202/70018">1.0</stationweight>
+      <stationweight assignmentid="14" station="2014202/70019">1.0</stationweight>
+      <stationweight assignmentid="15" station="2014202/70020">1.0</stationweight>
+      <stationweight assignmentid="16" station="2014202/70021">1.0</stationweight>
+      <stationweight assignmentid="17" station="2014202/70022">1.0</stationweight>
+      <stationweight assignmentid="18" station="2014202/70023">1.0</stationweight>
+      <stationweight assignmentid="19" station="2014202/70024">1.0</stationweight>
+      <stationweight assignmentid="20" station="2014202/70025">1.0</stationweight>
+      <stationweight assignmentid="21" station="2014202/70026">1.0</stationweight>
+      <stationweight assignmentid="22" station="2014202/70027">1.0</stationweight>
+      <stationweight assignmentid="23" station="2014202/70028">1.0</stationweight>
+      <stationweight assignmentid="24" station="2014202/70029">1.0</stationweight>
+      <stationweight assignmentid="25" station="2014202/70030">1.0</stationweight>
+      <stationweight assignmentid="26" station="2014202/70031">1.0</stationweight>
+      <stationweight assignmentid="27" station="2014202/70032">1.0</stationweight>
+      <stationweight assignmentid="28" station="2014202/70033">1.0</stationweight>
+      <stationweight assignmentid="29" station="2014202/70035">1.0</stationweight>
+      <stationweight assignmentid="30" station="2014202/70036">1.0</stationweight>
+      <stationweight assignmentid="31" station="2014202/70037">1.0</stationweight>
+      <stationweight assignmentid="32" station="2014202/70038">1.0</stationweight>
+      <stationweight assignmentid="33" station="2014202/70039">1.0</stationweight>
+      <stationweight assignmentid="34" station="2014202/70040">1.0</stationweight>
+      <stationweight assignmentid="35" station="2014202/70042">1.0</stationweight>
+      <stationweight assignmentid="36" station="2014202/70043">1.0</stationweight>
+      <stationweight assignmentid="37" station="2014202/70044">1.0</stationweight>
+      <stationweight assignmentid="38" station="2014202/70045">1.0</stationweight>
+      <stationweight assignmentid="39" station="2014202/70046">1.0</stationweight>
+      <stationweight assignmentid="40" station="2014202/70047">1.0</stationweight>
+      <stationweight assignmentid="41" station="2014202/70048">1.0</stationweight>
+      <stationweight assignmentid="42" station="2014202/70049">1.0</stationweight>
+      <stationweight assignmentid="43" station="2014202/70050">1.0</stationweight>
+      <stationweight assignmentid="44" station="2014202/70051">1.0</stationweight>
+      <stationweight assignmentid="45" station="2014202/70052">1.0</stationweight>
+      <stationweight assignmentid="46" station="2014202/70053">1.0</stationweight>
+      <stationweight assignmentid="47" station="2014202/70054">1.0</stationweight>
+      <stationweight assignmentid="48" station="2014202/70055">1.0</stationweight>
+      <stationweight assignmentid="49" station="2014202/70056">1.0</stationweight>
+      <stationweight assignmentid="50" station="2014202/70057">1.0</stationweight>
+      <stationweight assignmentid="51" station="2014202/70058">1.0</stationweight>
+      <stationweight assignmentid="52" station="2014202/70059">1.0</stationweight>
+      <stationweight assignmentid="53" station="2014202/70060">1.0</stationweight>
+      <stationweight assignmentid="54" station="2014202/70061">1.0</stationweight>
+      <stationweight assignmentid="55" station="2014202/70062">1.0</stationweight>
+      <stationweight assignmentid="56" station="2014202/70063">1.0</stationweight>
+      <stationweight assignmentid="57" station="2014202/70064">1.0</stationweight>
+      <stationweight assignmentid="58" station="2014202/70065">1.0</stationweight>
+      <stationweight assignmentid="59" station="2014202/70066">1.0</stationweight>
+      <stationweight assignmentid="60" station="2014202/70067">1.0</stationweight>
+      <stationweight assignmentid="61" station="2014202/70068">1.0</stationweight>
+      <stationweight assignmentid="62" station="2014202/70069">1.0</stationweight>
+      <stationweight assignmentid="63" station="2014202/70070">1.0</stationweight>
+      <stationweight assignmentid="64" station="2014202/70071">1.0</stationweight>
+      <stationweight assignmentid="65" station="2014202/70072">1.0</stationweight>
+      <stationweight assignmentid="66" station="2014202/70073">1.0</stationweight>
+      <stationweight assignmentid="67" station="2014202/70074">1.0</stationweight>
+      <stationweight assignmentid="68" station="2014202/70075">1.0</stationweight>
+      <stationweight assignmentid="69" station="2014202/70076">1.0</stationweight>
+      <stationweight assignmentid="70" station="2014202/70077">1.0</stationweight>
+      <stationweight assignmentid="71" station="2014202/70078">1.0</stationweight>
+      <stationweight assignmentid="72" station="2014202/70079">1.0</stationweight>
+      <stationweight assignmentid="73" station="2014202/70080">1.0</stationweight>
+      <stationweight assignmentid="74" station="2014202/70081">1.0</stationweight>
+      <stationweight assignmentid="75" station="2014202/70082">1.0</stationweight>
+      <stationweight assignmentid="76" station="2014202/70083">1.0</stationweight>
+      <stationweight assignmentid="77" station="2014202/70084">1.0</stationweight>
+      <stationweight assignmentid="78" station="2014202/70085">1.0</stationweight>
+      <stationweight assignmentid="79" station="2014202/70086">1.0</stationweight>
+      <stationweight assignmentid="80" station="2014202/70087">1.0</stationweight>
+      <stationweight assignmentid="81" station="2014202/70088">1.0</stationweight>
+      <stationweight assignmentid="82" station="2014202/70089">1.0</stationweight>
+      <stationweight assignmentid="83" station="2014202/70090">1.0</stationweight>
+      <stationweight assignmentid="84" station="2014202/70091">1.0</stationweight>
+      <stationweight assignmentid="85" station="2014202/70092">1.0</stationweight>
+      <stationweight assignmentid="86" station="2014202/70093">1.0</stationweight>
+      <stationweight assignmentid="87" station="2014202/70094">1.0</stationweight>
+      <stationweight assignmentid="88" station="2014202/70095">1.0</stationweight>
+      <stationweight assignmentid="89" station="2014202/70096">1.0</stationweight>
+      <stationweight assignmentid="90" station="2014202/70097">1.0</stationweight>
+      <stationweight assignmentid="91" station="2014202/70098">1.0</stationweight>
+      <stationweight assignmentid="92" station="2014202/70099">1.0</stationweight>
+      <stationweight assignmentid="93" station="2014202/70100">1.0</stationweight>
+      <stationweight assignmentid="94" station="2014202/70101">1.0</stationweight>
+      <stationweight assignmentid="95" station="2014202/70103">1.0</stationweight>
+      <stationweight assignmentid="96" station="2014202/70104">1.0</stationweight>
+      <stationweight assignmentid="97" station="2014202/70105">1.0</stationweight>
+      <stationweight assignmentid="98" station="2014202/70106">1.0</stationweight>
+      <stationweight assignmentid="99" station="2014202/70107">1.0</stationweight>
+      <stationweight assignmentid="100" station="2014202/70108">1.0</stationweight>
+      <stationweight assignmentid="101" station="2014202/70109">1.0</stationweight>
+      <stationweight assignmentid="102" station="2014202/70110">1.0</stationweight>
+      <stationweight assignmentid="103" station="2014202/70111">1.0</stationweight>
+      <stationweight assignmentid="104" station="2014202/70112">1.0</stationweight>
+      <stationweight assignmentid="105" station="2014202/70113">1.0</stationweight>
+      <stationweight assignmentid="106" station="2014202/70114">1.0</stationweight>
+      <stationweight assignmentid="107" station="2014202/70115">1.0</stationweight>
+      <stationweight assignmentid="108" station="2014202/70116">1.0</stationweight>
+      <stationweight assignmentid="109" station="2014202/70117">1.0</stationweight>
+      <stationweight assignmentid="110" station="2014202/70118">1.0</stationweight>
+      <stationweight assignmentid="111" station="2014202/70119">1.0</stationweight>
+      <stationweight assignmentid="112" station="2014202/70120">1.0</stationweight>
+      <stationweight assignmentid="113" station="2014202/70121">1.0</stationweight>
+      <stationweight assignmentid="114" station="2014202/70122">1.0</stationweight>
+      <stationweight assignmentid="115" station="2014202/70123">1.0</stationweight>
+      <stationweight assignmentid="116" station="2014202/70124">1.0</stationweight>
+      <stationweight assignmentid="117" station="2014202/70125">1.0</stationweight>
+      <stationweight assignmentid="118" station="2014202/70126">1.0</stationweight>
+      <stationweight assignmentid="119" station="2014202/70127">1.0</stationweight>
+      <stationweight assignmentid="120" station="2014202/70128">1.0</stationweight>
+      <stationweight assignmentid="121" station="2014202/70129">1.0</stationweight>
+      <stationweight assignmentid="122" station="2014202/70130">1.0</stationweight>
+      <stationweight assignmentid="123" station="2014202/70131">1.0</stationweight>
+      <stationweight assignmentid="124" station="2014202/70132">1.0</stationweight>
+      <stationweight assignmentid="125" station="2014202/70133">1.0</stationweight>
+      <stationweight assignmentid="126" station="2014202/70134">1.0</stationweight>
+      <stationweight assignmentid="127" station="2014202/70135">1.0</stationweight>
+      <stationweight assignmentid="128" station="2014202/70136">1.0</stationweight>
+      <stationweight assignmentid="129" station="2014202/70137">1.0</stationweight>
+      <stationweight assignmentid="130" station="2014202/70138">1.0</stationweight>
+      <stationweight assignmentid="131" station="2014202/70139">1.0</stationweight>
+      <stationweight assignmentid="132" station="2014202/70140">1.0</stationweight>
+      <stationweight assignmentid="133" station="2014202/70141">1.0</stationweight>
+      <stationweight assignmentid="134" station="2014202/70142">1.0</stationweight>
+      <stationweight assignmentid="135" station="2014202/70143">1.0</stationweight>
+      <stationweight assignmentid="136" station="2014202/70144">1.0</stationweight>
+      <stationweight assignmentid="137" station="2014202/70145">1.0</stationweight>
+      <stationweight assignmentid="138" station="2014202/70146">1.0</stationweight>
+      <stationweight assignmentid="139" station="2014202/70147">1.0</stationweight>
+      <stationweight assignmentid="140" station="2014202/70150">1.0</stationweight>
+      <stationweight assignmentid="141" station="2014202/70151">1.0</stationweight>
+      <stationweight assignmentid="142" station="2014202/70152">1.0</stationweight>
+      <stationweight assignmentid="143" station="2014202/70153">1.0</stationweight>
+      <stationweight assignmentid="144" station="2014202/70154">1.0</stationweight>
+      <stationweight assignmentid="145" station="2014202/70155">1.0</stationweight>
+      <stationweight assignmentid="146" station="2014202/70156">1.0</stationweight>
+      <stationweight assignmentid="147" station="2014202/70157">1.0</stationweight>
+      <stationweight assignmentid="148" station="2014202/70158">1.0</stationweight>
+      <stationweight assignmentid="149" station="2014202/70159">1.0</stationweight>
+      <stationweight assignmentid="150" station="2014202/70160">1.0</stationweight>
+      <stationweight assignmentid="151" station="2014202/70161">1.0</stationweight>
+      <stationweight assignmentid="152" station="2014202/70162">1.0</stationweight>
+      <stationweight assignmentid="153" station="2014202/70163">1.0</stationweight>
+      <stationweight assignmentid="154" station="2014202/70164">1.0</stationweight>
+      <stationweight assignmentid="155" station="2014202/70165">1.0</stationweight>
+      <stationweight assignmentid="156" station="2014202/70166">1.0</stationweight>
+      <stationweight assignmentid="157" station="2014202/70167">1.0</stationweight>
+      <stationweight assignmentid="158" station="2014202/70168">1.0</stationweight>
+      <stationweight assignmentid="159" station="2014202/70169">1.0</stationweight>
+      <stationweight assignmentid="160" station="2014202/70170">1.0</stationweight>
+      <stationweight assignmentid="161" station="2014202/70171">1.0</stationweight>
+      <stationweight assignmentid="162" station="2014202/70172">1.0</stationweight>
+      <stationweight assignmentid="163" station="2014202/70175">1.0</stationweight>
+      <stationweight assignmentid="164" station="2014202/70176">1.0</stationweight>
+      <stationweight assignmentid="165" station="2014202/70177">1.0</stationweight>
+      <stationweight assignmentid="166" station="2014202/70178">1.0</stationweight>
+      <stationweight assignmentid="167" station="2014202/70179">1.0</stationweight>
+      <stationweight assignmentid="168" station="2014202/70180">1.0</stationweight>
+      <stationweight assignmentid="169" station="2014202/70181">1.0</stationweight>
+      <stationweight assignmentid="170" station="2014202/70182">1.0</stationweight>
+      <stationweight assignmentid="171" station="2014202/70183">1.0</stationweight>
+      <stationweight assignmentid="172" station="2014202/70184">1.0</stationweight>
+      <stationweight assignmentid="173" station="2014202/70185">1.0</stationweight>
+      <stationweight assignmentid="174" station="2014202/70186">1.0</stationweight>
+      <stationweight assignmentid="175" station="2014202/70187">1.0</stationweight>
+      <stationweight assignmentid="176" station="2014202/70188">1.0</stationweight>
+      <stationweight assignmentid="177" station="2014202/70189">1.0</stationweight>
+      <stationweight assignmentid="178" station="2014202/70190">1.0</stationweight>
+      <stationweight assignmentid="179" station="2014202/70191">1.0</stationweight>
+      <stationweight assignmentid="180" station="2014202/70192">1.0</stationweight>
+      <stationweight assignmentid="181" station="2014202/70193">1.0</stationweight>
+      <stationweight assignmentid="182" station="2014202/70194">1.0</stationweight>
+      <stationweight assignmentid="183" station="2014202/70195">1.0</stationweight>
+      <stationweight assignmentid="184" station="2014202/70196">1.0</stationweight>
+      <stationweight assignmentid="185" station="2014805/70301">1.0</stationweight>
+      <stationweight assignmentid="186" station="2014805/70302">1.0</stationweight>
+      <stationweight assignmentid="187" station="2014805/70303">1.0</stationweight>
+      <stationweight assignmentid="188" station="2014805/70304">1.0</stationweight>
+      <stationweight assignmentid="189" station="2014805/70305">1.0</stationweight>
+      <stationweight assignmentid="190" station="2014805/70306">1.0</stationweight>
+      <stationweight assignmentid="191" station="2014805/70307">1.0</stationweight>
+      <stationweight assignmentid="192" station="2014805/70308">1.0</stationweight>
+      <stationweight assignmentid="193" station="2014805/70309">1.0</stationweight>
+      <stationweight assignmentid="194" station="2014805/70310">1.0</stationweight>
+      <stationweight assignmentid="195" station="2014805/70311">1.0</stationweight>
+      <stationweight assignmentid="196" station="2014805/70312">1.0</stationweight>
+      <stationweight assignmentid="197" station="2014805/70313">1.0</stationweight>
+      <stationweight assignmentid="198" station="2014805/70314">1.0</stationweight>
+      <stationweight assignmentid="199" station="2014805/70315">1.0</stationweight>
+      <stationweight assignmentid="200" station="2014805/70316">1.0</stationweight>
+      <stationweight assignmentid="201" station="2014805/70317">1.0</stationweight>
+      <stationweight assignmentid="202" station="2014805/70318">1.0</stationweight>
+      <stationweight assignmentid="203" station="2014805/70319">1.0</stationweight>
+      <stationweight assignmentid="204" station="2014805/70320">1.0</stationweight>
+      <stationweight assignmentid="205" station="2014805/70321">1.0</stationweight>
+      <stationweight assignmentid="206" station="2014805/70322">1.0</stationweight>
+      <stationweight assignmentid="207" station="2014805/70324">1.0</stationweight>
+      <stationweight assignmentid="208" station="2014805/70325">1.0</stationweight>
+      <stationweight assignmentid="209" station="2014805/70326">1.0</stationweight>
+      <stationweight assignmentid="210" station="2014805/70327">1.0</stationweight>
+      <stationweight assignmentid="211" station="2014805/70328">1.0</stationweight>
+      <stationweight assignmentid="212" station="2014805/70329">1.0</stationweight>
+      <stationweight assignmentid="213" station="2014805/70330">1.0</stationweight>
+      <stationweight assignmentid="214" station="2014805/70331">1.0</stationweight>
+      <stationweight assignmentid="215" station="2014805/70332">1.0</stationweight>
+      <stationweight assignmentid="216" station="2014805/70333">1.0</stationweight>
+      <stationweight assignmentid="217" station="2014805/70334">1.0</stationweight>
+      <stationweight assignmentid="218" station="2014805/70335">1.0</stationweight>
+      <stationweight assignmentid="219" station="2014805/70336">1.0</stationweight>
+      <stationweight assignmentid="220" station="2014805/70337">1.0</stationweight>
+      <stationweight assignmentid="221" station="2014805/70338">1.0</stationweight>
+      <stationweight assignmentid="222" station="2014805/70339">1.0</stationweight>
+      <stationweight assignmentid="223" station="2014805/70340">1.0</stationweight>
+      <stationweight assignmentid="224" station="2014805/70341">1.0</stationweight>
+      <stationweight assignmentid="225" station="2014805/70342">1.0</stationweight>
+      <stationweight assignmentid="226" station="2014805/70343">1.0</stationweight>
+      <stationweight assignmentid="227" station="2014805/70344">1.0</stationweight>
+      <stationweight assignmentid="228" station="2014805/70345">1.0</stationweight>
+      <stationweight assignmentid="229" station="2014805/70346">1.0</stationweight>
+      <stationweight assignmentid="230" station="2014805/70347">1.0</stationweight>
+      <stationweight assignmentid="231" station="2014805/70348">1.0</stationweight>
+      <stationweight assignmentid="232" station="2014805/70349">1.0</stationweight>
+      <stationweight assignmentid="233" station="2014805/70350">1.0</stationweight>
+      <stationweight assignmentid="234" station="2014805/70351">1.0</stationweight>
+      <stationweight assignmentid="235" station="2014805/70352">1.0</stationweight>
+      <stationweight assignmentid="236" station="2014805/70353">1.0</stationweight>
+      <stationweight assignmentid="237" station="2014805/70354">1.0</stationweight>
+      <stationweight assignmentid="238" station="2014805/70355">1.0</stationweight>
+      <stationweight assignmentid="239" station="2014805/70356">1.0</stationweight>
+      <stationweight assignmentid="240" station="2014805/70357">1.0</stationweight>
+      <stationweight assignmentid="241" station="2014805/70358">1.0</stationweight>
+      <stationweight assignmentid="242" station="2014805/70359">1.0</stationweight>
+      <stationweight assignmentid="243" station="2014805/70360">1.0</stationweight>
+      <stationweight assignmentid="244" station="2014805/70361">1.0</stationweight>
+      <stationweight assignmentid="245" station="2014805/70362">1.0</stationweight>
+      <stationweight assignmentid="246" station="2014805/70363">1.0</stationweight>
+      <stationweight assignmentid="247" station="2014805/70364">1.0</stationweight>
+      <stationweight assignmentid="248" station="2014805/70365">1.0</stationweight>
+      <stationweight assignmentid="249" station="2014805/70366">1.0</stationweight>
+      <stationweight assignmentid="250" station="2014805/70367">1.0</stationweight>
+      <stationweight assignmentid="251" station="2014805/70368">1.0</stationweight>
+      <stationweight assignmentid="252" station="2014805/70369">1.0</stationweight>
+      <stationweight assignmentid="253" station="2014805/70370">1.0</stationweight>
+      <stationweight assignmentid="254" station="2014805/70371">1.0</stationweight>
+      <stationweight assignmentid="255" station="2014805/70372">1.0</stationweight>
+      <stationweight assignmentid="256" station="2014805/70373">1.0</stationweight>
+      <stationweight assignmentid="257" station="2014805/70374">1.0</stationweight>
+      <stationweight assignmentid="258" station="2014805/70375">1.0</stationweight>
+      <stationweight assignmentid="259" station="2014805/70376">1.0</stationweight>
+      <stationweight assignmentid="260" station="2014805/70377">1.0</stationweight>
+      <stationweight assignmentid="261" station="2014805/70378">1.0</stationweight>
+      <stationweight assignmentid="262" station="2014805/70379">1.0</stationweight>
+      <stationweight assignmentid="263" station="2014805/70380">1.0</stationweight>
+      <stationweight assignmentid="264" station="2014805/70381">1.0</stationweight>
+      <stationweight assignmentid="265" station="2014805/70382">1.0</stationweight>
+      <stationweight assignmentid="266" station="2014805/70383">1.0</stationweight>
+      <stationweight assignmentid="267" station="2014805/70384">1.0</stationweight>
+      <stationweight assignmentid="268" station="2014805/70386">1.0</stationweight>
+      <stationweight assignmentid="269" station="2014805/70387">1.0</stationweight>
+      <stationweight assignmentid="270" station="2014805/70388">1.0</stationweight>
+      <stationweight assignmentid="271" station="2014805/70389">1.0</stationweight>
+      <stationweight assignmentid="272" station="2014805/70390">1.0</stationweight>
+      <stationweight assignmentid="273" station="2014805/70391">1.0</stationweight>
+      <stationweight assignmentid="274" station="2014805/70393">1.0</stationweight>
+      <stationweight assignmentid="275" station="2014805/70394">1.0</stationweight>
+      <stationweight assignmentid="276" station="2014805/70395">1.0</stationweight>
+      <stationweight assignmentid="277" station="2014805/70396">1.0</stationweight>
+      <stationweight assignmentid="278" station="2014805/70397">1.0</stationweight>
+      <stationweight assignmentid="279" station="2014805/70398">1.0</stationweight>
+      <stationweight assignmentid="280" station="2014805/70399">1.0</stationweight>
+      <stationweight assignmentid="281" station="2014805/70400">1.0</stationweight>
+      <stationweight assignmentid="282" station="2014805/70401">1.0</stationweight>
+      <stationweight assignmentid="283" station="2014805/70402">1.0</stationweight>
+      <stationweight assignmentid="284" station="2014805/70403">1.0</stationweight>
+      <stationweight assignmentid="285" station="2014805/70404">1.0</stationweight>
+      <stationweight assignmentid="286" station="2014805/70405">1.0</stationweight>
+      <stationweight assignmentid="287" station="2014805/70406">1.0</stationweight>
+      <stationweight assignmentid="288" station="2014805/70407">1.0</stationweight>
+      <stationweight assignmentid="289" station="2014805/70409">1.0</stationweight>
+      <stationweight assignmentid="290" station="2014805/70410">1.0</stationweight>
+      <stationweight assignmentid="291" station="2014805/70411">1.0</stationweight>
+      <stationweight assignmentid="292" station="2014805/70412">1.0</stationweight>
+      <stationweight assignmentid="293" station="2014805/70413">1.0</stationweight>
+      <stationweight assignmentid="294" station="2014805/70414">1.0</stationweight>
+      <stationweight assignmentid="295" station="2014805/70415">1.0</stationweight>
+      <stationweight assignmentid="296" station="2014805/70416">1.0</stationweight>
+      <stationweight assignmentid="297" station="2014805/70417">1.0</stationweight>
+      <stationweight assignmentid="298" station="2014805/70418">1.0</stationweight>
+      <stationweight assignmentid="299" station="2014805/70419">1.0</stationweight>
+      <stationweight assignmentid="300" station="2014805/70420">1.0</stationweight>
+      <stationweight assignmentid="301" station="2014805/70421">1.0</stationweight>
+      <stationweight assignmentid="302" station="2014805/70422">1.0</stationweight>
+      <stationweight assignmentid="303" station="2014805/70425">1.0</stationweight>
+      <stationweight assignmentid="304" station="2014805/70426">1.0</stationweight>
+      <stationweight assignmentid="305" station="2014805/70427">1.0</stationweight>
+      <stationweight assignmentid="306" station="2014805/70428">1.0</stationweight>
+      <stationweight assignmentid="307" station="2014805/70429">1.0</stationweight>
+      <stationweight assignmentid="308" station="2014805/70430">1.0</stationweight>
+      <stationweight assignmentid="309" station="2014805/70431">1.0</stationweight>
+      <stationweight assignmentid="310" station="2014805/70432">1.0</stationweight>
+      <stationweight assignmentid="311" station="2014805/70433">1.0</stationweight>
+      <stationweight assignmentid="312" station="2014805/70434">1.0</stationweight>
+      <stationweight assignmentid="313" station="2014805/70435">1.0</stationweight>
+      <stationweight assignmentid="314" station="2014805/70436">1.0</stationweight>
+      <stationweight assignmentid="315" station="2014805/70437">1.0</stationweight>
+      <stationweight assignmentid="316" station="2014805/70439">1.0</stationweight>
+      <stationweight assignmentid="317" station="2014805/70440">1.0</stationweight>
+      <stationweight assignmentid="318" station="2014805/70442">1.0</stationweight>
+      <stationweight assignmentid="319" station="2014805/70443">1.0</stationweight>
+      <stationweight assignmentid="320" station="2014805/70444">1.0</stationweight>
+      <stationweight assignmentid="321" station="2014805/70445">1.0</stationweight>
+      <stationweight assignmentid="322" station="2014805/70446">1.0</stationweight>
+      <stationweight assignmentid="323" station="2014805/70447">1.0</stationweight>
+      <stationweight assignmentid="324" station="2014805/70448">1.0</stationweight>
+      <stationweight assignmentid="325" station="2014805/70449">1.0</stationweight>
+      <stationweight assignmentid="326" station="2014805/70450">1.0</stationweight>
+      <stationweight assignmentid="327" station="2014805/70451">1.0</stationweight>
+      <stationweight assignmentid="328" station="2014805/70452">1.0</stationweight>
+      <stationweight assignmentid="329" station="2014805/70453">1.0</stationweight>
+      <stationweight assignmentid="330" station="2014805/70454">1.0</stationweight>
+      <stationweight assignmentid="331" station="2014805/70455">1.0</stationweight>
+      <stationweight assignmentid="332" station="2014805/70456">1.0</stationweight>
+      <stationweight assignmentid="333" station="2014805/70457">1.0</stationweight>
+      <stationweight assignmentid="334" station="2014805/70458">1.0</stationweight>
+      <stationweight assignmentid="335" station="2014805/70459">1.0</stationweight>
+      <stationweight assignmentid="336" station="2014805/70460">1.0</stationweight>
+      <stationweight assignmentid="337" station="2014805/70466">1.0</stationweight>
+      <stationweight assignmentid="338" station="2014805/70467">1.0</stationweight>
+      <stationweight assignmentid="339" station="2014805/70468">1.0</stationweight>
+      <stationweight assignmentid="340" station="2014805/70469">1.0</stationweight>
+      <stationweight assignmentid="341" station="2014805/70470">1.0</stationweight>
+      <stationweight assignmentid="342" station="2014805/70471">1.0</stationweight>
+      <stationweight assignmentid="343" station="2014805/70472">1.0</stationweight>
+      <stationweight assignmentid="344" station="2014805/70473">1.0</stationweight>
+      <stationweight assignmentid="345" station="2014805/70474">1.0</stationweight>
+      <stationweight assignmentid="346" station="2014805/70475">1.0</stationweight>
+      <stationweight assignmentid="347" station="2014805/70476">1.0</stationweight>
+      <stationweight assignmentid="348" station="2014805/70477">1.0</stationweight>
+      <stationweight assignmentid="349" station="2014805/70478">1.0</stationweight>
+      <stationweight assignmentid="350" station="2014805/70479">1.0</stationweight>
+      <stationweight assignmentid="351" station="2014805/70480">1.0</stationweight>
+      <stationweight assignmentid="352" station="2014805/70481">1.0</stationweight>
+      <stationweight assignmentid="353" station="2014805/70482">1.0</stationweight>
+      <stationweight assignmentid="354" station="2014805/70483">1.0</stationweight>
+      <stationweight assignmentid="355" station="2014805/70484">1.0</stationweight>
+      <stationweight assignmentid="356" station="2014805/70485">1.0</stationweight>
+      <stationweight assignmentid="357" station="2014805/70486">1.0</stationweight>
+      <stationweight assignmentid="358" station="2014805/70487">1.0</stationweight>
+      <stationweight assignmentid="359" station="2014805/70488">1.0</stationweight>
+      <stationweight assignmentid="360" station="2014805/70489">1.0</stationweight>
+      <stationweight assignmentid="361" station="2014805/70490">1.0</stationweight>
+      <stationweight assignmentid="362" station="0114_2014_UANA_NANSE/1">1.0</stationweight>
+      <stationweight assignmentid="363" station="0114_2014_UANA_NANSE/2">1.0</stationweight>
+      <stationweight assignmentid="364" station="0114_2014_UANA_NANSE/3">1.0</stationweight>
+      <stationweight assignmentid="365" station="0114_2014_UANA_NANSE/4">1.0</stationweight>
+      <stationweight assignmentid="366" station="0114_2014_UANA_NANSE/5">1.0</stationweight>
+      <stationweight assignmentid="367" station="0114_2014_UANA_NANSE/6">1.0</stationweight>
+      <stationweight assignmentid="368" station="0114_2014_UANA_NANSE/7">1.0</stationweight>
+      <stationweight assignmentid="369" station="0114_2014_UANA_NANSE/8">1.0</stationweight>
+      <stationweight assignmentid="370" station="0114_2014_UANA_NANSE/9">1.0</stationweight>
+      <stationweight assignmentid="371" station="0114_2014_UANA_NANSE/10">1.0</stationweight>
+      <stationweight assignmentid="372" station="0114_2014_UANA_NANSE/11">1.0</stationweight>
+      <stationweight assignmentid="373" station="0114_2014_UANA_NANSE/12">1.0</stationweight>
+      <stationweight assignmentid="374" station="0114_2014_UANA_NANSE/13">1.0</stationweight>
+      <stationweight assignmentid="375" station="0114_2014_UANA_NANSE/14">1.0</stationweight>
+      <stationweight assignmentid="376" station="0114_2014_UANA_NANSE/15">1.0</stationweight>
+      <stationweight assignmentid="377" station="0114_2014_UANA_NANSE/16">1.0</stationweight>
+      <stationweight assignmentid="378" station="0114_2014_UANA_NANSE/17">1.0</stationweight>
+      <stationweight assignmentid="379" station="0114_2014_UANA_NANSE/18">1.0</stationweight>
+      <stationweight assignmentid="380" station="0114_2014_UANA_NANSE/19">1.0</stationweight>
+      <stationweight assignmentid="381" station="0114_2014_UANA_NANSE/20">1.0</stationweight>
+      <stationweight assignmentid="382" station="0114_2014_UANA_NANSE/21">1.0</stationweight>
+      <stationweight assignmentid="383" station="0114_2014_UANA_NANSE/22">1.0</stationweight>
+      <stationweight assignmentid="384" station="0114_2014_UANA_NANSE/23">1.0</stationweight>
+      <stationweight assignmentid="385" station="0114_2014_UANA_NANSE/24">1.0</stationweight>
+      <stationweight assignmentid="386" station="0114_2014_UANA_NANSE/25">1.0</stationweight>
+      <stationweight assignmentid="387" station="0114_2014_UANA_NANSE/26">1.0</stationweight>
+      <stationweight assignmentid="388" station="0114_2014_UANA_NANSE/27">1.0</stationweight>
+      <stationweight assignmentid="389" station="0114_2014_UANA_NANSE/28">1.0</stationweight>
+      <stationweight assignmentid="390" station="0114_2014_UANA_NANSE/29">1.0</stationweight>
+      <stationweight assignmentid="391" station="0114_2014_UANA_NANSE/30">1.0</stationweight>
+      <stationweight assignmentid="392" station="0114_2014_UANA_NANSE/31">1.0</stationweight>
+      <stationweight assignmentid="393" station="0114_2014_UANA_NANSE/32">1.0</stationweight>
+      <stationweight assignmentid="394" station="0114_2014_UANA_NANSE/33">1.0</stationweight>
+      <stationweight assignmentid="395" station="0114_2014_UANA_NANSE/34">1.0</stationweight>
+      <stationweight assignmentid="396" station="0114_2014_UANA_NANSE/35">1.0</stationweight>
+      <stationweight assignmentid="397" station="0114_2014_UANA_NANSE/36">1.0</stationweight>
+      <stationweight assignmentid="398" station="0114_2014_UANA_NANSE/37">1.0</stationweight>
+      <stationweight assignmentid="399" station="0114_2014_UANA_NANSE/38">1.0</stationweight>
+      <stationweight assignmentid="400" station="0114_2014_UANA_NANSE/39">1.0</stationweight>
+      <stationweight assignmentid="401" station="0114_2014_UANA_NANSE/40">1.0</stationweight>
+      <stationweight assignmentid="402" station="0114_2014_UANA_NANSE/41">1.0</stationweight>
+      <stationweight assignmentid="403" station="0114_2014_UANA_NANSE/42">1.0</stationweight>
+      <stationweight assignmentid="404" station="0114_2014_UANA_NANSE/43">1.0</stationweight>
+      <stationweight assignmentid="405" station="0114_2014_UANA_NANSE/44">1.0</stationweight>
+      <stationweight assignmentid="406" station="0114_2014_UANA_NANSE/45">1.0</stationweight>
+      <stationweight assignmentid="407" station="0114_2014_UANA_NANSE/46">1.0</stationweight>
+      <stationweight assignmentid="408" station="0114_2014_UANA_NANSE/47">1.0</stationweight>
+      <stationweight assignmentid="409" station="0114_2014_UANA_NANSE/48">1.0</stationweight>
+      <stationweight assignmentid="410" station="0114_2014_UANA_NANSE/49">1.0</stationweight>
+      <stationweight assignmentid="411" station="0114_2014_UANA_NANSE/50">1.0</stationweight>
+      <stationweight assignmentid="412" station="0114_2014_UANA_NANSE/51">1.0</stationweight>
+      <stationweight assignmentid="413" station="0114_2014_UANA_NANSE/52">1.0</stationweight>
+      <stationweight assignmentid="414" station="0114_2014_UANA_NANSE/53">1.0</stationweight>
+      <stationweight assignmentid="415" station="0114_2014_UANA_NANSE/54">1.0</stationweight>
+      <stationweight assignmentid="416" station="0114_2014_UANA_NANSE/55">1.0</stationweight>
+      <stationweight assignmentid="417" station="0114_2014_UANA_NANSE/56">1.0</stationweight>
+      <stationweight assignmentid="418" station="0114_2014_UANA_NANSE/57">1.0</stationweight>
+      <stationweight assignmentid="419" station="0114_2014_UANA_NANSE/58">1.0</stationweight>
+      <stationweight assignmentid="420" station="0114_2014_UANA_NANSE/59">1.0</stationweight>
+      <stationweight assignmentid="421" station="0114_2014_UANA_NANSE/60">1.0</stationweight>
+      <stationweight assignmentid="422" station="0114_2014_UANA_NANSE/61">1.0</stationweight>
+      <stationweight assignmentid="423" station="0114_2014_UANA_NANSE/62">1.0</stationweight>
+      <stationweight assignmentid="424" station="0114_2014_UANA_NANSE/63">1.0</stationweight>
+      <stationweight assignmentid="425" station="0114_2014_UANA_NANSE/64">1.0</stationweight>
+      <stationweight assignmentid="426" station="0114_2014_UANA_NANSE/65">1.0</stationweight>
+      <stationweight assignmentid="427" station="0114_2014_UANA_NANSE/66">1.0</stationweight>
+      <stationweight assignmentid="428" station="0114_2014_UANA_NANSE/67">1.0</stationweight>
+      <stationweight assignmentid="429" station="0114_2014_UANA_NANSE/68">1.0</stationweight>
+      <stationweight assignmentid="430" station="0114_2014_UANA_NANSE/69">1.0</stationweight>
+      <stationweight assignmentid="431" station="0114_2014_UANA_NANSE/70">1.0</stationweight>
+      <stationweight assignmentid="432" station="0114_2014_UANA_NANSE/71">1.0</stationweight>
+      <stationweight assignmentid="433" station="0114_2014_UANA_NANSE/72">1.0</stationweight>
+      <stationweight assignmentid="434" station="0114_2014_UANA_NANSE/73">1.0</stationweight>
+      <stationweight assignmentid="435" station="0114_2014_UANA_NANSE/74">1.0</stationweight>
+      <stationweight assignmentid="436" station="0114_2014_UANA_NANSE/75">1.0</stationweight>
+      <stationweight assignmentid="437" station="0114_2014_UANA_NANSE/76">1.0</stationweight>
+      <stationweight assignmentid="438" station="0114_2014_UANA_NANSE/77">1.0</stationweight>
+      <stationweight assignmentid="439" station="0114_2014_UANA_NANSE/78">1.0</stationweight>
+      <stationweight assignmentid="440" station="0114_2014_UANA_NANSE/79">1.0</stationweight>
+      <stationweight assignmentid="441" station="0114_2014_UANA_NANSE/80">1.0</stationweight>
+      <stationweight assignmentid="442" station="0114_2014_UANA_NANSE/81">1.0</stationweight>
+      <stationweight assignmentid="443" station="0114_2014_UANA_NANSE/82">1.0</stationweight>
+      <stationweight assignmentid="444" station="0114_2014_UANA_NANSE/83">1.0</stationweight>
+      <stationweight assignmentid="445" station="0114_2014_UANA_NANSE/84">1.0</stationweight>
+      <stationweight assignmentid="446" station="0114_2014_UANA_NANSE/85">1.0</stationweight>
+      <stationweight assignmentid="447" station="0114_2014_UANA_NANSE/86">1.0</stationweight>
+      <stationweight assignmentid="448" station="0114_2014_UANA_NANSE/87">1.0</stationweight>
+      <stationweight assignmentid="449" station="0114_2014_UANA_NANSE/88">1.0</stationweight>
+      <stationweight assignmentid="450" station="0114_2014_UANA_NANSE/89">1.0</stationweight>
+      <stationweight assignmentid="451" station="0114_2014_UANA_NANSE/90">1.0</stationweight>
+      <stationweight assignmentid="452" station="0114_2014_UANA_NANSE/91">1.0</stationweight>
+      <stationweight assignmentid="453" station="0114_2014_UANA_NANSE/92">1.0</stationweight>
+      <stationweight assignmentid="454" station="0114_2014_UANA_NANSE/93">1.0</stationweight>
+      <stationweight assignmentid="455" station="0114_2014_UANA_NANSE/94">1.0</stationweight>
+      <stationweight assignmentid="456" station="0114_2014_UANA_NANSE/95">1.0</stationweight>
+      <stationweight assignmentid="457" station="0114_2014_UANA_NANSE/96">1.0</stationweight>
+      <stationweight assignmentid="458" station="0114_2014_UANA_NANSE/97">1.0</stationweight>
+      <stationweight assignmentid="459" station="0114_2014_UANA_NANSE/98">1.0</stationweight>
+      <stationweight assignmentid="460" station="0114_2014_UANA_NANSE/99">1.0</stationweight>
+      <stationweight assignmentid="461" station="0114_2014_UANA_NANSE/100">1.0</stationweight>
+      <stationweight assignmentid="462" station="0114_2014_UANA_NANSE/102">1.0</stationweight>
+      <stationweight assignmentid="463" station="0114_2014_UANA_NANSE/103">1.0</stationweight>
+      <stationweight assignmentid="464" station="0114_2014_UANA_NANSE/104">1.0</stationweight>
+      <stationweight assignmentid="465" station="0114_2014_UANA_NANSE/105">1.0</stationweight>
+      <stationweight assignmentid="466" station="0114_2014_UANA_NANSE/106">1.0</stationweight>
+      <stationweight assignmentid="467" station="0114_2014_UANA_NANSE/107">1.0</stationweight>
+      <stationweight assignmentid="468" station="0114_2014_UANA_NANSE/108">1.0</stationweight>
+      <stationweight assignmentid="469" station="0114_2014_UANA_NANSE/109">1.0</stationweight>
+      <stationweight assignmentid="470" station="0114_2014_UANA_NANSE/110">1.0</stationweight>
+      <stationweight assignmentid="471" station="0114_2014_UANA_NANSE/111">1.0</stationweight>
+      <stationweight assignmentid="472" station="0114_2014_UANA_NANSE/112">1.0</stationweight>
+      <stationweight assignmentid="473" station="0114_2014_UANA_NANSE/113">1.0</stationweight>
+    </bioticassignment>
+    <suassignment>
+      <assignmentid sampleunit="S1" estlayer="1">1</assignmentid>
+      <assignmentid sampleunit="S2" estlayer="1">2</assignmentid>
+      <assignmentid sampleunit="S3" estlayer="1">3</assignmentid>
+      <assignmentid sampleunit="S4" estlayer="1">4</assignmentid>
+      <assignmentid sampleunit="S5" estlayer="1">5</assignmentid>
+      <assignmentid sampleunit="S6" estlayer="1">6</assignmentid>
+      <assignmentid sampleunit="S7" estlayer="1">7</assignmentid>
+      <assignmentid sampleunit="S8" estlayer="1">8</assignmentid>
+      <assignmentid sampleunit="S9" estlayer="1">9</assignmentid>
+      <assignmentid sampleunit="S10" estlayer="1">10</assignmentid>
+      <assignmentid sampleunit="S11" estlayer="1">11</assignmentid>
+      <assignmentid sampleunit="S12" estlayer="1">12</assignmentid>
+      <assignmentid sampleunit="S13" estlayer="1">13</assignmentid>
+      <assignmentid sampleunit="S14" estlayer="1">14</assignmentid>
+      <assignmentid sampleunit="S15" estlayer="1">15</assignmentid>
+      <assignmentid sampleunit="S16" estlayer="1">16</assignmentid>
+      <assignmentid sampleunit="S17" estlayer="1">17</assignmentid>
+      <assignmentid sampleunit="S18" estlayer="1">18</assignmentid>
+      <assignmentid sampleunit="S19" estlayer="1">19</assignmentid>
+      <assignmentid sampleunit="S20" estlayer="1">20</assignmentid>
+      <assignmentid sampleunit="S21" estlayer="1">21</assignmentid>
+      <assignmentid sampleunit="S22" estlayer="1">22</assignmentid>
+      <assignmentid sampleunit="S23" estlayer="1">23</assignmentid>
+      <assignmentid sampleunit="S24" estlayer="1">24</assignmentid>
+      <assignmentid sampleunit="S25" estlayer="1">25</assignmentid>
+      <assignmentid sampleunit="S26" estlayer="1">26</assignmentid>
+      <assignmentid sampleunit="S27" estlayer="1">27</assignmentid>
+      <assignmentid sampleunit="S28" estlayer="1">28</assignmentid>
+      <assignmentid sampleunit="S29" estlayer="1">29</assignmentid>
+      <assignmentid sampleunit="S30" estlayer="1">30</assignmentid>
+      <assignmentid sampleunit="S31" estlayer="1">31</assignmentid>
+      <assignmentid sampleunit="S32" estlayer="1">32</assignmentid>
+      <assignmentid sampleunit="S33" estlayer="1">33</assignmentid>
+      <assignmentid sampleunit="S34" estlayer="1">34</assignmentid>
+      <assignmentid sampleunit="S35" estlayer="1">35</assignmentid>
+      <assignmentid sampleunit="S36" estlayer="1">36</assignmentid>
+      <assignmentid sampleunit="S37" estlayer="1">37</assignmentid>
+      <assignmentid sampleunit="S38" estlayer="1">38</assignmentid>
+      <assignmentid sampleunit="S39" estlayer="1">39</assignmentid>
+      <assignmentid sampleunit="S40" estlayer="1">40</assignmentid>
+      <assignmentid sampleunit="S41" estlayer="1">41</assignmentid>
+      <assignmentid sampleunit="S42" estlayer="1">42</assignmentid>
+      <assignmentid sampleunit="S43" estlayer="1">43</assignmentid>
+      <assignmentid sampleunit="S44" estlayer="1">44</assignmentid>
+      <assignmentid sampleunit="S45" estlayer="1">45</assignmentid>
+      <assignmentid sampleunit="S46" estlayer="1">46</assignmentid>
+      <assignmentid sampleunit="S47" estlayer="1">47</assignmentid>
+      <assignmentid sampleunit="S48" estlayer="1">48</assignmentid>
+      <assignmentid sampleunit="S49" estlayer="1">49</assignmentid>
+      <assignmentid sampleunit="S50" estlayer="1">50</assignmentid>
+      <assignmentid sampleunit="S51" estlayer="1">51</assignmentid>
+      <assignmentid sampleunit="S52" estlayer="1">52</assignmentid>
+      <assignmentid sampleunit="S53" estlayer="1">53</assignmentid>
+      <assignmentid sampleunit="S54" estlayer="1">54</assignmentid>
+      <assignmentid sampleunit="S55" estlayer="1">55</assignmentid>
+      <assignmentid sampleunit="S56" estlayer="1">56</assignmentid>
+      <assignmentid sampleunit="S57" estlayer="1">57</assignmentid>
+      <assignmentid sampleunit="S58" estlayer="1">58</assignmentid>
+      <assignmentid sampleunit="S59" estlayer="1">59</assignmentid>
+      <assignmentid sampleunit="S60" estlayer="1">60</assignmentid>
+      <assignmentid sampleunit="S61" estlayer="1">61</assignmentid>
+      <assignmentid sampleunit="S62" estlayer="1">62</assignmentid>
+      <assignmentid sampleunit="S63" estlayer="1">63</assignmentid>
+      <assignmentid sampleunit="S64" estlayer="1">64</assignmentid>
+      <assignmentid sampleunit="S65" estlayer="1">65</assignmentid>
+      <assignmentid sampleunit="S66" estlayer="1">66</assignmentid>
+      <assignmentid sampleunit="S67" estlayer="1">67</assignmentid>
+      <assignmentid sampleunit="S68" estlayer="1">68</assignmentid>
+      <assignmentid sampleunit="S69" estlayer="1">69</assignmentid>
+      <assignmentid sampleunit="S70" estlayer="1">70</assignmentid>
+      <assignmentid sampleunit="S71" estlayer="1">71</assignmentid>
+      <assignmentid sampleunit="S72" estlayer="1">72</assignmentid>
+      <assignmentid sampleunit="S73" estlayer="1">73</assignmentid>
+      <assignmentid sampleunit="S74" estlayer="1">74</assignmentid>
+      <assignmentid sampleunit="S75" estlayer="1">75</assignmentid>
+      <assignmentid sampleunit="S76" estlayer="1">76</assignmentid>
+      <assignmentid sampleunit="S77" estlayer="1">77</assignmentid>
+      <assignmentid sampleunit="S78" estlayer="1">78</assignmentid>
+      <assignmentid sampleunit="S79" estlayer="1">79</assignmentid>
+      <assignmentid sampleunit="S80" estlayer="1">80</assignmentid>
+      <assignmentid sampleunit="S81" estlayer="1">81</assignmentid>
+      <assignmentid sampleunit="S82" estlayer="1">82</assignmentid>
+      <assignmentid sampleunit="S83" estlayer="1">83</assignmentid>
+      <assignmentid sampleunit="S84" estlayer="1">84</assignmentid>
+      <assignmentid sampleunit="S85" estlayer="1">85</assignmentid>
+      <assignmentid sampleunit="S86" estlayer="1">86</assignmentid>
+      <assignmentid sampleunit="S87" estlayer="1">87</assignmentid>
+      <assignmentid sampleunit="S88" estlayer="1">88</assignmentid>
+      <assignmentid sampleunit="S89" estlayer="1">89</assignmentid>
+      <assignmentid sampleunit="S90" estlayer="1">90</assignmentid>
+      <assignmentid sampleunit="S91" estlayer="1">91</assignmentid>
+      <assignmentid sampleunit="S92" estlayer="1">92</assignmentid>
+      <assignmentid sampleunit="S93" estlayer="1">93</assignmentid>
+      <assignmentid sampleunit="S94" estlayer="1">94</assignmentid>
+      <assignmentid sampleunit="S95" estlayer="1">95</assignmentid>
+      <assignmentid sampleunit="S96" estlayer="1">96</assignmentid>
+      <assignmentid sampleunit="S97" estlayer="1">97</assignmentid>
+      <assignmentid sampleunit="S98" estlayer="1">98</assignmentid>
+      <assignmentid sampleunit="S99" estlayer="1">99</assignmentid>
+      <assignmentid sampleunit="S100" estlayer="1">100</assignmentid>
+      <assignmentid sampleunit="S101" estlayer="1">101</assignmentid>
+      <assignmentid sampleunit="S102" estlayer="1">102</assignmentid>
+      <assignmentid sampleunit="S103" estlayer="1">103</assignmentid>
+      <assignmentid sampleunit="S104" estlayer="1">104</assignmentid>
+      <assignmentid sampleunit="S105" estlayer="1">105</assignmentid>
+      <assignmentid sampleunit="S106" estlayer="1">106</assignmentid>
+      <assignmentid sampleunit="S107" estlayer="1">107</assignmentid>
+      <assignmentid sampleunit="S108" estlayer="1">108</assignmentid>
+      <assignmentid sampleunit="S109" estlayer="1">109</assignmentid>
+      <assignmentid sampleunit="S110" estlayer="1">110</assignmentid>
+      <assignmentid sampleunit="S111" estlayer="1">111</assignmentid>
+      <assignmentid sampleunit="S112" estlayer="1">112</assignmentid>
+      <assignmentid sampleunit="S113" estlayer="1">113</assignmentid>
+      <assignmentid sampleunit="S114" estlayer="1">114</assignmentid>
+      <assignmentid sampleunit="S115" estlayer="1">115</assignmentid>
+      <assignmentid sampleunit="S116" estlayer="1">116</assignmentid>
+      <assignmentid sampleunit="S117" estlayer="1">117</assignmentid>
+      <assignmentid sampleunit="S118" estlayer="1">118</assignmentid>
+      <assignmentid sampleunit="S119" estlayer="1">119</assignmentid>
+      <assignmentid sampleunit="S120" estlayer="1">120</assignmentid>
+      <assignmentid sampleunit="S121" estlayer="1">121</assignmentid>
+      <assignmentid sampleunit="S122" estlayer="1">122</assignmentid>
+      <assignmentid sampleunit="S123" estlayer="1">123</assignmentid>
+      <assignmentid sampleunit="S124" estlayer="1">124</assignmentid>
+      <assignmentid sampleunit="S125" estlayer="1">125</assignmentid>
+      <assignmentid sampleunit="S126" estlayer="1">126</assignmentid>
+      <assignmentid sampleunit="S127" estlayer="1">127</assignmentid>
+      <assignmentid sampleunit="S128" estlayer="1">128</assignmentid>
+      <assignmentid sampleunit="S129" estlayer="1">129</assignmentid>
+      <assignmentid sampleunit="S130" estlayer="1">130</assignmentid>
+      <assignmentid sampleunit="S131" estlayer="1">131</assignmentid>
+      <assignmentid sampleunit="S132" estlayer="1">132</assignmentid>
+      <assignmentid sampleunit="S133" estlayer="1">133</assignmentid>
+      <assignmentid sampleunit="S134" estlayer="1">134</assignmentid>
+      <assignmentid sampleunit="S135" estlayer="1">135</assignmentid>
+      <assignmentid sampleunit="S136" estlayer="1">136</assignmentid>
+      <assignmentid sampleunit="S137" estlayer="1">137</assignmentid>
+      <assignmentid sampleunit="S138" estlayer="1">138</assignmentid>
+      <assignmentid sampleunit="S139" estlayer="1">139</assignmentid>
+      <assignmentid sampleunit="S140" estlayer="1">140</assignmentid>
+      <assignmentid sampleunit="S141" estlayer="1">141</assignmentid>
+      <assignmentid sampleunit="S142" estlayer="1">142</assignmentid>
+      <assignmentid sampleunit="S143" estlayer="1">143</assignmentid>
+      <assignmentid sampleunit="S144" estlayer="1">144</assignmentid>
+      <assignmentid sampleunit="S145" estlayer="1">145</assignmentid>
+      <assignmentid sampleunit="S146" estlayer="1">146</assignmentid>
+      <assignmentid sampleunit="S147" estlayer="1">147</assignmentid>
+      <assignmentid sampleunit="S148" estlayer="1">148</assignmentid>
+      <assignmentid sampleunit="S149" estlayer="1">149</assignmentid>
+      <assignmentid sampleunit="S150" estlayer="1">150</assignmentid>
+      <assignmentid sampleunit="S151" estlayer="1">151</assignmentid>
+      <assignmentid sampleunit="S152" estlayer="1">152</assignmentid>
+      <assignmentid sampleunit="S153" estlayer="1">153</assignmentid>
+      <assignmentid sampleunit="S154" estlayer="1">154</assignmentid>
+      <assignmentid sampleunit="S155" estlayer="1">155</assignmentid>
+      <assignmentid sampleunit="S156" estlayer="1">156</assignmentid>
+      <assignmentid sampleunit="S157" estlayer="1">157</assignmentid>
+      <assignmentid sampleunit="S158" estlayer="1">158</assignmentid>
+      <assignmentid sampleunit="S159" estlayer="1">159</assignmentid>
+      <assignmentid sampleunit="S160" estlayer="1">160</assignmentid>
+      <assignmentid sampleunit="S161" estlayer="1">161</assignmentid>
+      <assignmentid sampleunit="S162" estlayer="1">162</assignmentid>
+      <assignmentid sampleunit="S163" estlayer="1">163</assignmentid>
+      <assignmentid sampleunit="S164" estlayer="1">164</assignmentid>
+      <assignmentid sampleunit="S165" estlayer="1">165</assignmentid>
+      <assignmentid sampleunit="S166" estlayer="1">166</assignmentid>
+      <assignmentid sampleunit="S167" estlayer="1">167</assignmentid>
+      <assignmentid sampleunit="S168" estlayer="1">168</assignmentid>
+      <assignmentid sampleunit="S169" estlayer="1">169</assignmentid>
+      <assignmentid sampleunit="S170" estlayer="1">170</assignmentid>
+      <assignmentid sampleunit="S171" estlayer="1">171</assignmentid>
+      <assignmentid sampleunit="S172" estlayer="1">172</assignmentid>
+      <assignmentid sampleunit="S173" estlayer="1">173</assignmentid>
+      <assignmentid sampleunit="S174" estlayer="1">174</assignmentid>
+      <assignmentid sampleunit="S175" estlayer="1">175</assignmentid>
+      <assignmentid sampleunit="S176" estlayer="1">176</assignmentid>
+      <assignmentid sampleunit="S177" estlayer="1">177</assignmentid>
+      <assignmentid sampleunit="S178" estlayer="1">178</assignmentid>
+      <assignmentid sampleunit="S179" estlayer="1">179</assignmentid>
+      <assignmentid sampleunit="S180" estlayer="1">180</assignmentid>
+      <assignmentid sampleunit="S181" estlayer="1">181</assignmentid>
+      <assignmentid sampleunit="S182" estlayer="1">182</assignmentid>
+      <assignmentid sampleunit="S183" estlayer="1">183</assignmentid>
+      <assignmentid sampleunit="S184" estlayer="1">184</assignmentid>
+      <assignmentid sampleunit="S185" estlayer="1">185</assignmentid>
+      <assignmentid sampleunit="S186" estlayer="1">186</assignmentid>
+      <assignmentid sampleunit="S187" estlayer="1">187</assignmentid>
+      <assignmentid sampleunit="S188" estlayer="1">188</assignmentid>
+      <assignmentid sampleunit="S189" estlayer="1">189</assignmentid>
+      <assignmentid sampleunit="S190" estlayer="1">190</assignmentid>
+      <assignmentid sampleunit="S191" estlayer="1">191</assignmentid>
+      <assignmentid sampleunit="S192" estlayer="1">192</assignmentid>
+      <assignmentid sampleunit="S193" estlayer="1">193</assignmentid>
+      <assignmentid sampleunit="S194" estlayer="1">194</assignmentid>
+      <assignmentid sampleunit="S195" estlayer="1">195</assignmentid>
+      <assignmentid sampleunit="S196" estlayer="1">196</assignmentid>
+      <assignmentid sampleunit="S197" estlayer="1">197</assignmentid>
+      <assignmentid sampleunit="S198" estlayer="1">198</assignmentid>
+      <assignmentid sampleunit="S199" estlayer="1">199</assignmentid>
+      <assignmentid sampleunit="S200" estlayer="1">200</assignmentid>
+      <assignmentid sampleunit="S201" estlayer="1">201</assignmentid>
+      <assignmentid sampleunit="S202" estlayer="1">202</assignmentid>
+      <assignmentid sampleunit="S203" estlayer="1">203</assignmentid>
+      <assignmentid sampleunit="S204" estlayer="1">204</assignmentid>
+      <assignmentid sampleunit="S205" estlayer="1">205</assignmentid>
+      <assignmentid sampleunit="S206" estlayer="1">206</assignmentid>
+      <assignmentid sampleunit="S207" estlayer="1">207</assignmentid>
+      <assignmentid sampleunit="S208" estlayer="1">208</assignmentid>
+      <assignmentid sampleunit="S209" estlayer="1">209</assignmentid>
+      <assignmentid sampleunit="S210" estlayer="1">210</assignmentid>
+      <assignmentid sampleunit="S211" estlayer="1">211</assignmentid>
+      <assignmentid sampleunit="S212" estlayer="1">212</assignmentid>
+      <assignmentid sampleunit="S213" estlayer="1">213</assignmentid>
+      <assignmentid sampleunit="S214" estlayer="1">214</assignmentid>
+      <assignmentid sampleunit="S215" estlayer="1">215</assignmentid>
+      <assignmentid sampleunit="S216" estlayer="1">216</assignmentid>
+      <assignmentid sampleunit="S217" estlayer="1">217</assignmentid>
+      <assignmentid sampleunit="S218" estlayer="1">218</assignmentid>
+      <assignmentid sampleunit="S219" estlayer="1">219</assignmentid>
+      <assignmentid sampleunit="S220" estlayer="1">220</assignmentid>
+      <assignmentid sampleunit="S221" estlayer="1">221</assignmentid>
+      <assignmentid sampleunit="S222" estlayer="1">222</assignmentid>
+      <assignmentid sampleunit="S223" estlayer="1">223</assignmentid>
+      <assignmentid sampleunit="S224" estlayer="1">224</assignmentid>
+      <assignmentid sampleunit="S225" estlayer="1">225</assignmentid>
+      <assignmentid sampleunit="S226" estlayer="1">226</assignmentid>
+      <assignmentid sampleunit="S227" estlayer="1">227</assignmentid>
+      <assignmentid sampleunit="S228" estlayer="1">228</assignmentid>
+      <assignmentid sampleunit="S229" estlayer="1">229</assignmentid>
+      <assignmentid sampleunit="S230" estlayer="1">230</assignmentid>
+      <assignmentid sampleunit="S231" estlayer="1">231</assignmentid>
+      <assignmentid sampleunit="S232" estlayer="1">232</assignmentid>
+      <assignmentid sampleunit="S233" estlayer="1">233</assignmentid>
+      <assignmentid sampleunit="S234" estlayer="1">234</assignmentid>
+      <assignmentid sampleunit="S235" estlayer="1">235</assignmentid>
+      <assignmentid sampleunit="S236" estlayer="1">236</assignmentid>
+      <assignmentid sampleunit="S237" estlayer="1">237</assignmentid>
+      <assignmentid sampleunit="S238" estlayer="1">238</assignmentid>
+      <assignmentid sampleunit="S239" estlayer="1">239</assignmentid>
+      <assignmentid sampleunit="S240" estlayer="1">240</assignmentid>
+      <assignmentid sampleunit="S241" estlayer="1">241</assignmentid>
+      <assignmentid sampleunit="S242" estlayer="1">242</assignmentid>
+      <assignmentid sampleunit="S243" estlayer="1">243</assignmentid>
+      <assignmentid sampleunit="S244" estlayer="1">244</assignmentid>
+      <assignmentid sampleunit="S245" estlayer="1">245</assignmentid>
+      <assignmentid sampleunit="S246" estlayer="1">246</assignmentid>
+      <assignmentid sampleunit="S247" estlayer="1">247</assignmentid>
+      <assignmentid sampleunit="S248" estlayer="1">248</assignmentid>
+      <assignmentid sampleunit="S249" estlayer="1">249</assignmentid>
+      <assignmentid sampleunit="S250" estlayer="1">250</assignmentid>
+      <assignmentid sampleunit="S251" estlayer="1">251</assignmentid>
+      <assignmentid sampleunit="S252" estlayer="1">252</assignmentid>
+      <assignmentid sampleunit="S253" estlayer="1">253</assignmentid>
+      <assignmentid sampleunit="S254" estlayer="1">254</assignmentid>
+      <assignmentid sampleunit="S255" estlayer="1">255</assignmentid>
+      <assignmentid sampleunit="S256" estlayer="1">256</assignmentid>
+      <assignmentid sampleunit="S257" estlayer="1">257</assignmentid>
+      <assignmentid sampleunit="S258" estlayer="1">258</assignmentid>
+      <assignmentid sampleunit="S259" estlayer="1">259</assignmentid>
+      <assignmentid sampleunit="S260" estlayer="1">260</assignmentid>
+      <assignmentid sampleunit="S261" estlayer="1">261</assignmentid>
+      <assignmentid sampleunit="S262" estlayer="1">262</assignmentid>
+      <assignmentid sampleunit="S263" estlayer="1">263</assignmentid>
+      <assignmentid sampleunit="S264" estlayer="1">264</assignmentid>
+      <assignmentid sampleunit="S265" estlayer="1">265</assignmentid>
+      <assignmentid sampleunit="S266" estlayer="1">266</assignmentid>
+      <assignmentid sampleunit="S267" estlayer="1">267</assignmentid>
+      <assignmentid sampleunit="S268" estlayer="1">268</assignmentid>
+      <assignmentid sampleunit="S269" estlayer="1">269</assignmentid>
+      <assignmentid sampleunit="S270" estlayer="1">270</assignmentid>
+      <assignmentid sampleunit="S271" estlayer="1">271</assignmentid>
+      <assignmentid sampleunit="S272" estlayer="1">272</assignmentid>
+      <assignmentid sampleunit="S273" estlayer="1">273</assignmentid>
+      <assignmentid sampleunit="S274" estlayer="1">274</assignmentid>
+      <assignmentid sampleunit="S275" estlayer="1">275</assignmentid>
+      <assignmentid sampleunit="S276" estlayer="1">276</assignmentid>
+      <assignmentid sampleunit="S277" estlayer="1">277</assignmentid>
+      <assignmentid sampleunit="S278" estlayer="1">278</assignmentid>
+      <assignmentid sampleunit="S279" estlayer="1">279</assignmentid>
+      <assignmentid sampleunit="S280" estlayer="1">280</assignmentid>
+      <assignmentid sampleunit="S281" estlayer="1">281</assignmentid>
+      <assignmentid sampleunit="S282" estlayer="1">282</assignmentid>
+      <assignmentid sampleunit="S283" estlayer="1">283</assignmentid>
+      <assignmentid sampleunit="S284" estlayer="1">284</assignmentid>
+      <assignmentid sampleunit="S285" estlayer="1">285</assignmentid>
+      <assignmentid sampleunit="S286" estlayer="1">286</assignmentid>
+      <assignmentid sampleunit="S287" estlayer="1">287</assignmentid>
+      <assignmentid sampleunit="S288" estlayer="1">288</assignmentid>
+      <assignmentid sampleunit="S289" estlayer="1">289</assignmentid>
+      <assignmentid sampleunit="S290" estlayer="1">290</assignmentid>
+      <assignmentid sampleunit="S291" estlayer="1">291</assignmentid>
+      <assignmentid sampleunit="S292" estlayer="1">292</assignmentid>
+      <assignmentid sampleunit="S293" estlayer="1">293</assignmentid>
+      <assignmentid sampleunit="S294" estlayer="1">294</assignmentid>
+      <assignmentid sampleunit="S295" estlayer="1">295</assignmentid>
+      <assignmentid sampleunit="S296" estlayer="1">296</assignmentid>
+      <assignmentid sampleunit="S297" estlayer="1">297</assignmentid>
+      <assignmentid sampleunit="S298" estlayer="1">298</assignmentid>
+      <assignmentid sampleunit="S299" estlayer="1">299</assignmentid>
+      <assignmentid sampleunit="S300" estlayer="1">300</assignmentid>
+      <assignmentid sampleunit="S301" estlayer="1">301</assignmentid>
+      <assignmentid sampleunit="S302" estlayer="1">302</assignmentid>
+      <assignmentid sampleunit="S303" estlayer="1">303</assignmentid>
+      <assignmentid sampleunit="S304" estlayer="1">304</assignmentid>
+      <assignmentid sampleunit="S305" estlayer="1">305</assignmentid>
+      <assignmentid sampleunit="S306" estlayer="1">306</assignmentid>
+      <assignmentid sampleunit="S307" estlayer="1">307</assignmentid>
+      <assignmentid sampleunit="S308" estlayer="1">308</assignmentid>
+      <assignmentid sampleunit="S309" estlayer="1">309</assignmentid>
+      <assignmentid sampleunit="S310" estlayer="1">310</assignmentid>
+      <assignmentid sampleunit="S311" estlayer="1">311</assignmentid>
+      <assignmentid sampleunit="S312" estlayer="1">312</assignmentid>
+      <assignmentid sampleunit="S313" estlayer="1">313</assignmentid>
+      <assignmentid sampleunit="S314" estlayer="1">314</assignmentid>
+      <assignmentid sampleunit="S315" estlayer="1">315</assignmentid>
+      <assignmentid sampleunit="S316" estlayer="1">316</assignmentid>
+      <assignmentid sampleunit="S317" estlayer="1">317</assignmentid>
+      <assignmentid sampleunit="S318" estlayer="1">318</assignmentid>
+      <assignmentid sampleunit="S319" estlayer="1">319</assignmentid>
+      <assignmentid sampleunit="S320" estlayer="1">320</assignmentid>
+      <assignmentid sampleunit="S321" estlayer="1">321</assignmentid>
+      <assignmentid sampleunit="S322" estlayer="1">322</assignmentid>
+      <assignmentid sampleunit="S323" estlayer="1">323</assignmentid>
+      <assignmentid sampleunit="S324" estlayer="1">324</assignmentid>
+      <assignmentid sampleunit="S325" estlayer="1">325</assignmentid>
+      <assignmentid sampleunit="S326" estlayer="1">326</assignmentid>
+      <assignmentid sampleunit="S327" estlayer="1">327</assignmentid>
+      <assignmentid sampleunit="S328" estlayer="1">328</assignmentid>
+      <assignmentid sampleunit="S329" estlayer="1">329</assignmentid>
+      <assignmentid sampleunit="S330" estlayer="1">330</assignmentid>
+      <assignmentid sampleunit="S331" estlayer="1">331</assignmentid>
+      <assignmentid sampleunit="S332" estlayer="1">332</assignmentid>
+      <assignmentid sampleunit="S333" estlayer="1">333</assignmentid>
+      <assignmentid sampleunit="S334" estlayer="1">334</assignmentid>
+      <assignmentid sampleunit="S335" estlayer="1">335</assignmentid>
+      <assignmentid sampleunit="S336" estlayer="1">336</assignmentid>
+      <assignmentid sampleunit="S337" estlayer="1">337</assignmentid>
+      <assignmentid sampleunit="S338" estlayer="1">338</assignmentid>
+      <assignmentid sampleunit="S339" estlayer="1">339</assignmentid>
+      <assignmentid sampleunit="S340" estlayer="1">340</assignmentid>
+      <assignmentid sampleunit="S341" estlayer="1">341</assignmentid>
+      <assignmentid sampleunit="S342" estlayer="1">342</assignmentid>
+      <assignmentid sampleunit="S343" estlayer="1">343</assignmentid>
+      <assignmentid sampleunit="S344" estlayer="1">344</assignmentid>
+      <assignmentid sampleunit="S345" estlayer="1">345</assignmentid>
+      <assignmentid sampleunit="S346" estlayer="1">346</assignmentid>
+      <assignmentid sampleunit="S347" estlayer="1">347</assignmentid>
+      <assignmentid sampleunit="S348" estlayer="1">348</assignmentid>
+      <assignmentid sampleunit="S349" estlayer="1">349</assignmentid>
+      <assignmentid sampleunit="S350" estlayer="1">350</assignmentid>
+      <assignmentid sampleunit="S351" estlayer="1">351</assignmentid>
+      <assignmentid sampleunit="S352" estlayer="1">352</assignmentid>
+      <assignmentid sampleunit="S353" estlayer="1">353</assignmentid>
+      <assignmentid sampleunit="S354" estlayer="1">354</assignmentid>
+      <assignmentid sampleunit="S355" estlayer="1">355</assignmentid>
+      <assignmentid sampleunit="S356" estlayer="1">356</assignmentid>
+      <assignmentid sampleunit="S357" estlayer="1">357</assignmentid>
+      <assignmentid sampleunit="S358" estlayer="1">358</assignmentid>
+      <assignmentid sampleunit="S359" estlayer="1">359</assignmentid>
+      <assignmentid sampleunit="S360" estlayer="1">360</assignmentid>
+      <assignmentid sampleunit="S361" estlayer="1">361</assignmentid>
+      <assignmentid sampleunit="S362" estlayer="1">362</assignmentid>
+      <assignmentid sampleunit="S363" estlayer="1">363</assignmentid>
+      <assignmentid sampleunit="S364" estlayer="1">364</assignmentid>
+      <assignmentid sampleunit="S365" estlayer="1">365</assignmentid>
+      <assignmentid sampleunit="S366" estlayer="1">366</assignmentid>
+      <assignmentid sampleunit="S367" estlayer="1">367</assignmentid>
+      <assignmentid sampleunit="S368" estlayer="1">368</assignmentid>
+      <assignmentid sampleunit="S369" estlayer="1">369</assignmentid>
+      <assignmentid sampleunit="S370" estlayer="1">370</assignmentid>
+      <assignmentid sampleunit="S371" estlayer="1">371</assignmentid>
+      <assignmentid sampleunit="S372" estlayer="1">372</assignmentid>
+      <assignmentid sampleunit="S373" estlayer="1">373</assignmentid>
+      <assignmentid sampleunit="S374" estlayer="1">374</assignmentid>
+      <assignmentid sampleunit="S375" estlayer="1">375</assignmentid>
+      <assignmentid sampleunit="S376" estlayer="1">376</assignmentid>
+      <assignmentid sampleunit="S377" estlayer="1">377</assignmentid>
+      <assignmentid sampleunit="S378" estlayer="1">378</assignmentid>
+      <assignmentid sampleunit="S379" estlayer="1">379</assignmentid>
+      <assignmentid sampleunit="S380" estlayer="1">380</assignmentid>
+      <assignmentid sampleunit="S381" estlayer="1">381</assignmentid>
+      <assignmentid sampleunit="S382" estlayer="1">382</assignmentid>
+      <assignmentid sampleunit="S383" estlayer="1">383</assignmentid>
+      <assignmentid sampleunit="S384" estlayer="1">384</assignmentid>
+      <assignmentid sampleunit="S385" estlayer="1">385</assignmentid>
+      <assignmentid sampleunit="S386" estlayer="1">386</assignmentid>
+      <assignmentid sampleunit="S387" estlayer="1">387</assignmentid>
+      <assignmentid sampleunit="S388" estlayer="1">388</assignmentid>
+      <assignmentid sampleunit="S389" estlayer="1">389</assignmentid>
+      <assignmentid sampleunit="S390" estlayer="1">390</assignmentid>
+      <assignmentid sampleunit="S391" estlayer="1">391</assignmentid>
+      <assignmentid sampleunit="S392" estlayer="1">392</assignmentid>
+      <assignmentid sampleunit="S393" estlayer="1">393</assignmentid>
+      <assignmentid sampleunit="S394" estlayer="1">394</assignmentid>
+      <assignmentid sampleunit="S395" estlayer="1">395</assignmentid>
+      <assignmentid sampleunit="S396" estlayer="1">396</assignmentid>
+      <assignmentid sampleunit="S397" estlayer="1">397</assignmentid>
+      <assignmentid sampleunit="S398" estlayer="1">398</assignmentid>
+      <assignmentid sampleunit="S399" estlayer="1">399</assignmentid>
+      <assignmentid sampleunit="S400" estlayer="1">400</assignmentid>
+      <assignmentid sampleunit="S401" estlayer="1">401</assignmentid>
+      <assignmentid sampleunit="S402" estlayer="1">402</assignmentid>
+      <assignmentid sampleunit="S403" estlayer="1">403</assignmentid>
+      <assignmentid sampleunit="S404" estlayer="1">404</assignmentid>
+      <assignmentid sampleunit="S405" estlayer="1">405</assignmentid>
+      <assignmentid sampleunit="S406" estlayer="1">406</assignmentid>
+      <assignmentid sampleunit="S407" estlayer="1">407</assignmentid>
+      <assignmentid sampleunit="S408" estlayer="1">408</assignmentid>
+      <assignmentid sampleunit="S409" estlayer="1">409</assignmentid>
+      <assignmentid sampleunit="S410" estlayer="1">410</assignmentid>
+      <assignmentid sampleunit="S411" estlayer="1">411</assignmentid>
+      <assignmentid sampleunit="S412" estlayer="1">412</assignmentid>
+      <assignmentid sampleunit="S413" estlayer="1">413</assignmentid>
+      <assignmentid sampleunit="S414" estlayer="1">414</assignmentid>
+      <assignmentid sampleunit="S415" estlayer="1">415</assignmentid>
+      <assignmentid sampleunit="S416" estlayer="1">416</assignmentid>
+      <assignmentid sampleunit="S417" estlayer="1">417</assignmentid>
+      <assignmentid sampleunit="S418" estlayer="1">418</assignmentid>
+      <assignmentid sampleunit="S419" estlayer="1">419</assignmentid>
+      <assignmentid sampleunit="S420" estlayer="1">420</assignmentid>
+      <assignmentid sampleunit="S421" estlayer="1">421</assignmentid>
+      <assignmentid sampleunit="S422" estlayer="1">422</assignmentid>
+      <assignmentid sampleunit="S423" estlayer="1">423</assignmentid>
+      <assignmentid sampleunit="S424" estlayer="1">424</assignmentid>
+      <assignmentid sampleunit="S425" estlayer="1">425</assignmentid>
+      <assignmentid sampleunit="S426" estlayer="1">426</assignmentid>
+      <assignmentid sampleunit="S427" estlayer="1">427</assignmentid>
+      <assignmentid sampleunit="S428" estlayer="1">428</assignmentid>
+      <assignmentid sampleunit="S429" estlayer="1">429</assignmentid>
+      <assignmentid sampleunit="S430" estlayer="1">430</assignmentid>
+      <assignmentid sampleunit="S431" estlayer="1">431</assignmentid>
+      <assignmentid sampleunit="S432" estlayer="1">432</assignmentid>
+      <assignmentid sampleunit="S433" estlayer="1">433</assignmentid>
+      <assignmentid sampleunit="S434" estlayer="1">434</assignmentid>
+      <assignmentid sampleunit="S435" estlayer="1">435</assignmentid>
+      <assignmentid sampleunit="S436" estlayer="1">436</assignmentid>
+      <assignmentid sampleunit="S437" estlayer="1">437</assignmentid>
+      <assignmentid sampleunit="S438" estlayer="1">438</assignmentid>
+      <assignmentid sampleunit="S439" estlayer="1">439</assignmentid>
+      <assignmentid sampleunit="S440" estlayer="1">440</assignmentid>
+      <assignmentid sampleunit="S441" estlayer="1">441</assignmentid>
+      <assignmentid sampleunit="S442" estlayer="1">442</assignmentid>
+      <assignmentid sampleunit="S443" estlayer="1">443</assignmentid>
+      <assignmentid sampleunit="S444" estlayer="1">444</assignmentid>
+      <assignmentid sampleunit="S445" estlayer="1">445</assignmentid>
+      <assignmentid sampleunit="S446" estlayer="1">446</assignmentid>
+      <assignmentid sampleunit="S447" estlayer="1">447</assignmentid>
+      <assignmentid sampleunit="S448" estlayer="1">448</assignmentid>
+      <assignmentid sampleunit="S449" estlayer="1">449</assignmentid>
+      <assignmentid sampleunit="S450" estlayer="1">450</assignmentid>
+      <assignmentid sampleunit="S451" estlayer="1">451</assignmentid>
+      <assignmentid sampleunit="S452" estlayer="1">452</assignmentid>
+      <assignmentid sampleunit="S453" estlayer="1">453</assignmentid>
+      <assignmentid sampleunit="S454" estlayer="1">454</assignmentid>
+      <assignmentid sampleunit="S455" estlayer="1">455</assignmentid>
+      <assignmentid sampleunit="S456" estlayer="1">456</assignmentid>
+      <assignmentid sampleunit="S457" estlayer="1">457</assignmentid>
+      <assignmentid sampleunit="S458" estlayer="1">458</assignmentid>
+      <assignmentid sampleunit="S459" estlayer="1">459</assignmentid>
+      <assignmentid sampleunit="S460" estlayer="1">460</assignmentid>
+      <assignmentid sampleunit="S461" estlayer="1">461</assignmentid>
+      <assignmentid sampleunit="S462" estlayer="1">462</assignmentid>
+      <assignmentid sampleunit="S463" estlayer="1">463</assignmentid>
+      <assignmentid sampleunit="S464" estlayer="1">464</assignmentid>
+      <assignmentid sampleunit="S465" estlayer="1">465</assignmentid>
+      <assignmentid sampleunit="S466" estlayer="1">466</assignmentid>
+      <assignmentid sampleunit="S467" estlayer="1">467</assignmentid>
+      <assignmentid sampleunit="S468" estlayer="1">468</assignmentid>
+      <assignmentid sampleunit="S469" estlayer="1">469</assignmentid>
+      <assignmentid sampleunit="S470" estlayer="1">470</assignmentid>
+      <assignmentid sampleunit="S471" estlayer="1">471</assignmentid>
+      <assignmentid sampleunit="S472" estlayer="1">472</assignmentid>
+      <assignmentid sampleunit="S473" estlayer="1">473</assignmentid>
+    </suassignment>
+    <assignmentresolution>
+      <value variable="LayerType">EstLayer</value>
+      <value variable="SampleUnitType">PSU</value>
+    </assignmentresolution>
+    <edsupsu>
+      <psu edsu="2014202/70005">S1</psu>
+      <psu edsu="2014202/70006">S2</psu>
+      <psu edsu="2014202/70007">S3</psu>
+      <psu edsu="2014202/70008">S4</psu>
+      <psu edsu="2014202/70009">S5</psu>
+      <psu edsu="2014202/70010">S6</psu>
+      <psu edsu="2014202/70011">S7</psu>
+      <psu edsu="2014202/70012">S8</psu>
+      <psu edsu="2014202/70014">S9</psu>
+      <psu edsu="2014202/70015">S10</psu>
+      <psu edsu="2014202/70016">S11</psu>
+      <psu edsu="2014202/70017">S12</psu>
+      <psu edsu="2014202/70018">S13</psu>
+      <psu edsu="2014202/70019">S14</psu>
+      <psu edsu="2014202/70020">S15</psu>
+      <psu edsu="2014202/70021">S16</psu>
+      <psu edsu="2014202/70022">S17</psu>
+      <psu edsu="2014202/70023">S18</psu>
+      <psu edsu="2014202/70024">S19</psu>
+      <psu edsu="2014202/70025">S20</psu>
+      <psu edsu="2014202/70026">S21</psu>
+      <psu edsu="2014202/70027">S22</psu>
+      <psu edsu="2014202/70028">S23</psu>
+      <psu edsu="2014202/70029">S24</psu>
+      <psu edsu="2014202/70030">S25</psu>
+      <psu edsu="2014202/70031">S26</psu>
+      <psu edsu="2014202/70032">S27</psu>
+      <psu edsu="2014202/70033">S28</psu>
+      <psu edsu="2014202/70035">S29</psu>
+      <psu edsu="2014202/70036">S30</psu>
+      <psu edsu="2014202/70037">S31</psu>
+      <psu edsu="2014202/70038">S32</psu>
+      <psu edsu="2014202/70039">S33</psu>
+      <psu edsu="2014202/70040">S34</psu>
+      <psu edsu="2014202/70042">S35</psu>
+      <psu edsu="2014202/70043">S36</psu>
+      <psu edsu="2014202/70044">S37</psu>
+      <psu edsu="2014202/70045">S38</psu>
+      <psu edsu="2014202/70046">S39</psu>
+      <psu edsu="2014202/70047">S40</psu>
+      <psu edsu="2014202/70048">S41</psu>
+      <psu edsu="2014202/70049">S42</psu>
+      <psu edsu="2014202/70050">S43</psu>
+      <psu edsu="2014202/70051">S44</psu>
+      <psu edsu="2014202/70052">S45</psu>
+      <psu edsu="2014202/70053">S46</psu>
+      <psu edsu="2014202/70054">S47</psu>
+      <psu edsu="2014202/70055">S48</psu>
+      <psu edsu="2014202/70056">S49</psu>
+      <psu edsu="2014202/70057">S50</psu>
+      <psu edsu="2014202/70058">S51</psu>
+      <psu edsu="2014202/70059">S52</psu>
+      <psu edsu="2014202/70060">S53</psu>
+      <psu edsu="2014202/70061">S54</psu>
+      <psu edsu="2014202/70062">S55</psu>
+      <psu edsu="2014202/70063">S56</psu>
+      <psu edsu="2014202/70064">S57</psu>
+      <psu edsu="2014202/70065">S58</psu>
+      <psu edsu="2014202/70066">S59</psu>
+      <psu edsu="2014202/70067">S60</psu>
+      <psu edsu="2014202/70068">S61</psu>
+      <psu edsu="2014202/70069">S62</psu>
+      <psu edsu="2014202/70070">S63</psu>
+      <psu edsu="2014202/70071">S64</psu>
+      <psu edsu="2014202/70072">S65</psu>
+      <psu edsu="2014202/70073">S66</psu>
+      <psu edsu="2014202/70074">S67</psu>
+      <psu edsu="2014202/70075">S68</psu>
+      <psu edsu="2014202/70076">S69</psu>
+      <psu edsu="2014202/70077">S70</psu>
+      <psu edsu="2014202/70078">S71</psu>
+      <psu edsu="2014202/70079">S72</psu>
+      <psu edsu="2014202/70080">S73</psu>
+      <psu edsu="2014202/70081">S74</psu>
+      <psu edsu="2014202/70082">S75</psu>
+      <psu edsu="2014202/70083">S76</psu>
+      <psu edsu="2014202/70084">S77</psu>
+      <psu edsu="2014202/70085">S78</psu>
+      <psu edsu="2014202/70086">S79</psu>
+      <psu edsu="2014202/70087">S80</psu>
+      <psu edsu="2014202/70088">S81</psu>
+      <psu edsu="2014202/70089">S82</psu>
+      <psu edsu="2014202/70090">S83</psu>
+      <psu edsu="2014202/70091">S84</psu>
+      <psu edsu="2014202/70092">S85</psu>
+      <psu edsu="2014202/70093">S86</psu>
+      <psu edsu="2014202/70094">S87</psu>
+      <psu edsu="2014202/70095">S88</psu>
+      <psu edsu="2014202/70096">S89</psu>
+      <psu edsu="2014202/70097">S90</psu>
+      <psu edsu="2014202/70098">S91</psu>
+      <psu edsu="2014202/70099">S92</psu>
+      <psu edsu="2014202/70100">S93</psu>
+      <psu edsu="2014202/70101">S94</psu>
+      <psu edsu="2014202/70103">S95</psu>
+      <psu edsu="2014202/70104">S96</psu>
+      <psu edsu="2014202/70105">S97</psu>
+      <psu edsu="2014202/70106">S98</psu>
+      <psu edsu="2014202/70107">S99</psu>
+      <psu edsu="2014202/70108">S100</psu>
+      <psu edsu="2014202/70109">S101</psu>
+      <psu edsu="2014202/70110">S102</psu>
+      <psu edsu="2014202/70111">S103</psu>
+      <psu edsu="2014202/70112">S104</psu>
+      <psu edsu="2014202/70113">S105</psu>
+      <psu edsu="2014202/70114">S106</psu>
+      <psu edsu="2014202/70115">S107</psu>
+      <psu edsu="2014202/70116">S108</psu>
+      <psu edsu="2014202/70117">S109</psu>
+      <psu edsu="2014202/70118">S110</psu>
+      <psu edsu="2014202/70119">S111</psu>
+      <psu edsu="2014202/70120">S112</psu>
+      <psu edsu="2014202/70121">S113</psu>
+      <psu edsu="2014202/70122">S114</psu>
+      <psu edsu="2014202/70123">S115</psu>
+      <psu edsu="2014202/70124">S116</psu>
+      <psu edsu="2014202/70125">S117</psu>
+      <psu edsu="2014202/70126">S118</psu>
+      <psu edsu="2014202/70127">S119</psu>
+      <psu edsu="2014202/70128">S120</psu>
+      <psu edsu="2014202/70129">S121</psu>
+      <psu edsu="2014202/70130">S122</psu>
+      <psu edsu="2014202/70131">S123</psu>
+      <psu edsu="2014202/70132">S124</psu>
+      <psu edsu="2014202/70133">S125</psu>
+      <psu edsu="2014202/70134">S126</psu>
+      <psu edsu="2014202/70135">S127</psu>
+      <psu edsu="2014202/70136">S128</psu>
+      <psu edsu="2014202/70137">S129</psu>
+      <psu edsu="2014202/70138">S130</psu>
+      <psu edsu="2014202/70139">S131</psu>
+      <psu edsu="2014202/70140">S132</psu>
+      <psu edsu="2014202/70141">S133</psu>
+      <psu edsu="2014202/70142">S134</psu>
+      <psu edsu="2014202/70143">S135</psu>
+      <psu edsu="2014202/70144">S136</psu>
+      <psu edsu="2014202/70145">S137</psu>
+      <psu edsu="2014202/70146">S138</psu>
+      <psu edsu="2014202/70147">S139</psu>
+      <psu edsu="2014202/70150">S140</psu>
+      <psu edsu="2014202/70151">S141</psu>
+      <psu edsu="2014202/70152">S142</psu>
+      <psu edsu="2014202/70153">S143</psu>
+      <psu edsu="2014202/70154">S144</psu>
+      <psu edsu="2014202/70155">S145</psu>
+      <psu edsu="2014202/70156">S146</psu>
+      <psu edsu="2014202/70157">S147</psu>
+      <psu edsu="2014202/70158">S148</psu>
+      <psu edsu="2014202/70159">S149</psu>
+      <psu edsu="2014202/70160">S150</psu>
+      <psu edsu="2014202/70161">S151</psu>
+      <psu edsu="2014202/70162">S152</psu>
+      <psu edsu="2014202/70163">S153</psu>
+      <psu edsu="2014202/70164">S154</psu>
+      <psu edsu="2014202/70165">S155</psu>
+      <psu edsu="2014202/70166">S156</psu>
+      <psu edsu="2014202/70167">S157</psu>
+      <psu edsu="2014202/70168">S158</psu>
+      <psu edsu="2014202/70169">S159</psu>
+      <psu edsu="2014202/70170">S160</psu>
+      <psu edsu="2014202/70171">S161</psu>
+      <psu edsu="2014202/70172">S162</psu>
+      <psu edsu="2014202/70175">S163</psu>
+      <psu edsu="2014202/70176">S164</psu>
+      <psu edsu="2014202/70177">S165</psu>
+      <psu edsu="2014202/70178">S166</psu>
+      <psu edsu="2014202/70179">S167</psu>
+      <psu edsu="2014202/70180">S168</psu>
+      <psu edsu="2014202/70181">S169</psu>
+      <psu edsu="2014202/70182">S170</psu>
+      <psu edsu="2014202/70183">S171</psu>
+      <psu edsu="2014202/70184">S172</psu>
+      <psu edsu="2014202/70185">S173</psu>
+      <psu edsu="2014202/70186">S174</psu>
+      <psu edsu="2014202/70187">S175</psu>
+      <psu edsu="2014202/70188">S176</psu>
+      <psu edsu="2014202/70189">S177</psu>
+      <psu edsu="2014202/70190">S178</psu>
+      <psu edsu="2014202/70191">S179</psu>
+      <psu edsu="2014202/70192">S180</psu>
+      <psu edsu="2014202/70193">S181</psu>
+      <psu edsu="2014202/70194">S182</psu>
+      <psu edsu="2014202/70195">S183</psu>
+      <psu edsu="2014202/70196">S184</psu>
+      <psu edsu="2014805/70301">S185</psu>
+      <psu edsu="2014805/70302">S186</psu>
+      <psu edsu="2014805/70303">S187</psu>
+      <psu edsu="2014805/70304">S188</psu>
+      <psu edsu="2014805/70305">S189</psu>
+      <psu edsu="2014805/70306">S190</psu>
+      <psu edsu="2014805/70307">S191</psu>
+      <psu edsu="2014805/70308">S192</psu>
+      <psu edsu="2014805/70309">S193</psu>
+      <psu edsu="2014805/70310">S194</psu>
+      <psu edsu="2014805/70311">S195</psu>
+      <psu edsu="2014805/70312">S196</psu>
+      <psu edsu="2014805/70313">S197</psu>
+      <psu edsu="2014805/70314">S198</psu>
+      <psu edsu="2014805/70315">S199</psu>
+      <psu edsu="2014805/70316">S200</psu>
+      <psu edsu="2014805/70317">S201</psu>
+      <psu edsu="2014805/70318">S202</psu>
+      <psu edsu="2014805/70319">S203</psu>
+      <psu edsu="2014805/70320">S204</psu>
+      <psu edsu="2014805/70321">S205</psu>
+      <psu edsu="2014805/70322">S206</psu>
+      <psu edsu="2014805/70324">S207</psu>
+      <psu edsu="2014805/70325">S208</psu>
+      <psu edsu="2014805/70326">S209</psu>
+      <psu edsu="2014805/70327">S210</psu>
+      <psu edsu="2014805/70328">S211</psu>
+      <psu edsu="2014805/70329">S212</psu>
+      <psu edsu="2014805/70330">S213</psu>
+      <psu edsu="2014805/70331">S214</psu>
+      <psu edsu="2014805/70332">S215</psu>
+      <psu edsu="2014805/70333">S216</psu>
+      <psu edsu="2014805/70334">S217</psu>
+      <psu edsu="2014805/70335">S218</psu>
+      <psu edsu="2014805/70336">S219</psu>
+      <psu edsu="2014805/70337">S220</psu>
+      <psu edsu="2014805/70338">S221</psu>
+      <psu edsu="2014805/70339">S222</psu>
+      <psu edsu="2014805/70340">S223</psu>
+      <psu edsu="2014805/70341">S224</psu>
+      <psu edsu="2014805/70342">S225</psu>
+      <psu edsu="2014805/70343">S226</psu>
+      <psu edsu="2014805/70344">S227</psu>
+      <psu edsu="2014805/70345">S228</psu>
+      <psu edsu="2014805/70346">S229</psu>
+      <psu edsu="2014805/70347">S230</psu>
+      <psu edsu="2014805/70348">S231</psu>
+      <psu edsu="2014805/70349">S232</psu>
+      <psu edsu="2014805/70350">S233</psu>
+      <psu edsu="2014805/70351">S234</psu>
+      <psu edsu="2014805/70352">S235</psu>
+      <psu edsu="2014805/70353">S236</psu>
+      <psu edsu="2014805/70354">S237</psu>
+      <psu edsu="2014805/70355">S238</psu>
+      <psu edsu="2014805/70356">S239</psu>
+      <psu edsu="2014805/70357">S240</psu>
+      <psu edsu="2014805/70358">S241</psu>
+      <psu edsu="2014805/70359">S242</psu>
+      <psu edsu="2014805/70360">S243</psu>
+      <psu edsu="2014805/70361">S244</psu>
+      <psu edsu="2014805/70362">S245</psu>
+      <psu edsu="2014805/70363">S246</psu>
+      <psu edsu="2014805/70364">S247</psu>
+      <psu edsu="2014805/70365">S248</psu>
+      <psu edsu="2014805/70366">S249</psu>
+      <psu edsu="2014805/70367">S250</psu>
+      <psu edsu="2014805/70368">S251</psu>
+      <psu edsu="2014805/70369">S252</psu>
+      <psu edsu="2014805/70370">S253</psu>
+      <psu edsu="2014805/70371">S254</psu>
+      <psu edsu="2014805/70372">S255</psu>
+      <psu edsu="2014805/70373">S256</psu>
+      <psu edsu="2014805/70374">S257</psu>
+      <psu edsu="2014805/70375">S258</psu>
+      <psu edsu="2014805/70376">S259</psu>
+      <psu edsu="2014805/70377">S260</psu>
+      <psu edsu="2014805/70378">S261</psu>
+      <psu edsu="2014805/70379">S262</psu>
+      <psu edsu="2014805/70380">S263</psu>
+      <psu edsu="2014805/70381">S264</psu>
+      <psu edsu="2014805/70382">S265</psu>
+      <psu edsu="2014805/70383">S266</psu>
+      <psu edsu="2014805/70384">S267</psu>
+      <psu edsu="2014805/70386">S268</psu>
+      <psu edsu="2014805/70387">S269</psu>
+      <psu edsu="2014805/70388">S270</psu>
+      <psu edsu="2014805/70389">S271</psu>
+      <psu edsu="2014805/70390">S272</psu>
+      <psu edsu="2014805/70391">S273</psu>
+      <psu edsu="2014805/70393">S274</psu>
+      <psu edsu="2014805/70394">S275</psu>
+      <psu edsu="2014805/70395">S276</psu>
+      <psu edsu="2014805/70396">S277</psu>
+      <psu edsu="2014805/70397">S278</psu>
+      <psu edsu="2014805/70398">S279</psu>
+      <psu edsu="2014805/70399">S280</psu>
+      <psu edsu="2014805/70400">S281</psu>
+      <psu edsu="2014805/70401">S282</psu>
+      <psu edsu="2014805/70402">S283</psu>
+      <psu edsu="2014805/70403">S284</psu>
+      <psu edsu="2014805/70404">S285</psu>
+      <psu edsu="2014805/70405">S286</psu>
+      <psu edsu="2014805/70406">S287</psu>
+      <psu edsu="2014805/70407">S288</psu>
+      <psu edsu="2014805/70409">S289</psu>
+      <psu edsu="2014805/70410">S290</psu>
+      <psu edsu="2014805/70411">S291</psu>
+      <psu edsu="2014805/70412">S292</psu>
+      <psu edsu="2014805/70413">S293</psu>
+      <psu edsu="2014805/70414">S294</psu>
+      <psu edsu="2014805/70415">S295</psu>
+      <psu edsu="2014805/70416">S296</psu>
+      <psu edsu="2014805/70417">S297</psu>
+      <psu edsu="2014805/70418">S298</psu>
+      <psu edsu="2014805/70419">S299</psu>
+      <psu edsu="2014805/70420">S300</psu>
+      <psu edsu="2014805/70421">S301</psu>
+      <psu edsu="2014805/70422">S302</psu>
+      <psu edsu="2014805/70425">S303</psu>
+      <psu edsu="2014805/70426">S304</psu>
+      <psu edsu="2014805/70427">S305</psu>
+      <psu edsu="2014805/70428">S306</psu>
+      <psu edsu="2014805/70429">S307</psu>
+      <psu edsu="2014805/70430">S308</psu>
+      <psu edsu="2014805/70431">S309</psu>
+      <psu edsu="2014805/70432">S310</psu>
+      <psu edsu="2014805/70433">S311</psu>
+      <psu edsu="2014805/70434">S312</psu>
+      <psu edsu="2014805/70435">S313</psu>
+      <psu edsu="2014805/70436">S314</psu>
+      <psu edsu="2014805/70437">S315</psu>
+      <psu edsu="2014805/70439">S316</psu>
+      <psu edsu="2014805/70440">S317</psu>
+      <psu edsu="2014805/70442">S318</psu>
+      <psu edsu="2014805/70443">S319</psu>
+      <psu edsu="2014805/70444">S320</psu>
+      <psu edsu="2014805/70445">S321</psu>
+      <psu edsu="2014805/70446">S322</psu>
+      <psu edsu="2014805/70447">S323</psu>
+      <psu edsu="2014805/70448">S324</psu>
+      <psu edsu="2014805/70449">S325</psu>
+      <psu edsu="2014805/70450">S326</psu>
+      <psu edsu="2014805/70451">S327</psu>
+      <psu edsu="2014805/70452">S328</psu>
+      <psu edsu="2014805/70453">S329</psu>
+      <psu edsu="2014805/70454">S330</psu>
+      <psu edsu="2014805/70455">S331</psu>
+      <psu edsu="2014805/70456">S332</psu>
+      <psu edsu="2014805/70457">S333</psu>
+      <psu edsu="2014805/70458">S334</psu>
+      <psu edsu="2014805/70459">S335</psu>
+      <psu edsu="2014805/70460">S336</psu>
+      <psu edsu="2014805/70466">S337</psu>
+      <psu edsu="2014805/70467">S338</psu>
+      <psu edsu="2014805/70468">S339</psu>
+      <psu edsu="2014805/70469">S340</psu>
+      <psu edsu="2014805/70470">S341</psu>
+      <psu edsu="2014805/70471">S342</psu>
+      <psu edsu="2014805/70472">S343</psu>
+      <psu edsu="2014805/70473">S344</psu>
+      <psu edsu="2014805/70474">S345</psu>
+      <psu edsu="2014805/70475">S346</psu>
+      <psu edsu="2014805/70476">S347</psu>
+      <psu edsu="2014805/70477">S348</psu>
+      <psu edsu="2014805/70478">S349</psu>
+      <psu edsu="2014805/70479">S350</psu>
+      <psu edsu="2014805/70480">S351</psu>
+      <psu edsu="2014805/70481">S352</psu>
+      <psu edsu="2014805/70482">S353</psu>
+      <psu edsu="2014805/70483">S354</psu>
+      <psu edsu="2014805/70484">S355</psu>
+      <psu edsu="2014805/70485">S356</psu>
+      <psu edsu="2014805/70486">S357</psu>
+      <psu edsu="2014805/70487">S358</psu>
+      <psu edsu="2014805/70488">S359</psu>
+      <psu edsu="2014805/70489">S360</psu>
+      <psu edsu="2014805/70490">S361</psu>
+      <psu edsu="0114_2014_UANA_NANSE/1">S362</psu>
+      <psu edsu="0114_2014_UANA_NANSE/2">S363</psu>
+      <psu edsu="0114_2014_UANA_NANSE/3">S364</psu>
+      <psu edsu="0114_2014_UANA_NANSE/4">S365</psu>
+      <psu edsu="0114_2014_UANA_NANSE/5">S366</psu>
+      <psu edsu="0114_2014_UANA_NANSE/6">S367</psu>
+      <psu edsu="0114_2014_UANA_NANSE/7">S368</psu>
+      <psu edsu="0114_2014_UANA_NANSE/8">S369</psu>
+      <psu edsu="0114_2014_UANA_NANSE/9">S370</psu>
+      <psu edsu="0114_2014_UANA_NANSE/10">S371</psu>
+      <psu edsu="0114_2014_UANA_NANSE/11">S372</psu>
+      <psu edsu="0114_2014_UANA_NANSE/12">S373</psu>
+      <psu edsu="0114_2014_UANA_NANSE/13">S374</psu>
+      <psu edsu="0114_2014_UANA_NANSE/14">S375</psu>
+      <psu edsu="0114_2014_UANA_NANSE/15">S376</psu>
+      <psu edsu="0114_2014_UANA_NANSE/16">S377</psu>
+      <psu edsu="0114_2014_UANA_NANSE/17">S378</psu>
+      <psu edsu="0114_2014_UANA_NANSE/18">S379</psu>
+      <psu edsu="0114_2014_UANA_NANSE/19">S380</psu>
+      <psu edsu="0114_2014_UANA_NANSE/20">S381</psu>
+      <psu edsu="0114_2014_UANA_NANSE/21">S382</psu>
+      <psu edsu="0114_2014_UANA_NANSE/22">S383</psu>
+      <psu edsu="0114_2014_UANA_NANSE/23">S384</psu>
+      <psu edsu="0114_2014_UANA_NANSE/24">S385</psu>
+      <psu edsu="0114_2014_UANA_NANSE/25">S386</psu>
+      <psu edsu="0114_2014_UANA_NANSE/26">S387</psu>
+      <psu edsu="0114_2014_UANA_NANSE/27">S388</psu>
+      <psu edsu="0114_2014_UANA_NANSE/28">S389</psu>
+      <psu edsu="0114_2014_UANA_NANSE/29">S390</psu>
+      <psu edsu="0114_2014_UANA_NANSE/30">S391</psu>
+      <psu edsu="0114_2014_UANA_NANSE/31">S392</psu>
+      <psu edsu="0114_2014_UANA_NANSE/32">S393</psu>
+      <psu edsu="0114_2014_UANA_NANSE/33">S394</psu>
+      <psu edsu="0114_2014_UANA_NANSE/34">S395</psu>
+      <psu edsu="0114_2014_UANA_NANSE/35">S396</psu>
+      <psu edsu="0114_2014_UANA_NANSE/36">S397</psu>
+      <psu edsu="0114_2014_UANA_NANSE/37">S398</psu>
+      <psu edsu="0114_2014_UANA_NANSE/38">S399</psu>
+      <psu edsu="0114_2014_UANA_NANSE/39">S400</psu>
+      <psu edsu="0114_2014_UANA_NANSE/40">S401</psu>
+      <psu edsu="0114_2014_UANA_NANSE/41">S402</psu>
+      <psu edsu="0114_2014_UANA_NANSE/42">S403</psu>
+      <psu edsu="0114_2014_UANA_NANSE/43">S404</psu>
+      <psu edsu="0114_2014_UANA_NANSE/44">S405</psu>
+      <psu edsu="0114_2014_UANA_NANSE/45">S406</psu>
+      <psu edsu="0114_2014_UANA_NANSE/46">S407</psu>
+      <psu edsu="0114_2014_UANA_NANSE/47">S408</psu>
+      <psu edsu="0114_2014_UANA_NANSE/48">S409</psu>
+      <psu edsu="0114_2014_UANA_NANSE/49">S410</psu>
+      <psu edsu="0114_2014_UANA_NANSE/50">S411</psu>
+      <psu edsu="0114_2014_UANA_NANSE/51">S412</psu>
+      <psu edsu="0114_2014_UANA_NANSE/52">S413</psu>
+      <psu edsu="0114_2014_UANA_NANSE/53">S414</psu>
+      <psu edsu="0114_2014_UANA_NANSE/54">S415</psu>
+      <psu edsu="0114_2014_UANA_NANSE/55">S416</psu>
+      <psu edsu="0114_2014_UANA_NANSE/56">S417</psu>
+      <psu edsu="0114_2014_UANA_NANSE/57">S418</psu>
+      <psu edsu="0114_2014_UANA_NANSE/58">S419</psu>
+      <psu edsu="0114_2014_UANA_NANSE/59">S420</psu>
+      <psu edsu="0114_2014_UANA_NANSE/60">S421</psu>
+      <psu edsu="0114_2014_UANA_NANSE/61">S422</psu>
+      <psu edsu="0114_2014_UANA_NANSE/62">S423</psu>
+      <psu edsu="0114_2014_UANA_NANSE/63">S424</psu>
+      <psu edsu="0114_2014_UANA_NANSE/64">S425</psu>
+      <psu edsu="0114_2014_UANA_NANSE/65">S426</psu>
+      <psu edsu="0114_2014_UANA_NANSE/66">S427</psu>
+      <psu edsu="0114_2014_UANA_NANSE/67">S428</psu>
+      <psu edsu="0114_2014_UANA_NANSE/68">S429</psu>
+      <psu edsu="0114_2014_UANA_NANSE/69">S430</psu>
+      <psu edsu="0114_2014_UANA_NANSE/70">S431</psu>
+      <psu edsu="0114_2014_UANA_NANSE/71">S432</psu>
+      <psu edsu="0114_2014_UANA_NANSE/72">S433</psu>
+      <psu edsu="0114_2014_UANA_NANSE/73">S434</psu>
+      <psu edsu="0114_2014_UANA_NANSE/74">S435</psu>
+      <psu edsu="0114_2014_UANA_NANSE/75">S436</psu>
+      <psu edsu="0114_2014_UANA_NANSE/76">S437</psu>
+      <psu edsu="0114_2014_UANA_NANSE/77">S438</psu>
+      <psu edsu="0114_2014_UANA_NANSE/78">S439</psu>
+      <psu edsu="0114_2014_UANA_NANSE/79">S440</psu>
+      <psu edsu="0114_2014_UANA_NANSE/80">S441</psu>
+      <psu edsu="0114_2014_UANA_NANSE/81">S442</psu>
+      <psu edsu="0114_2014_UANA_NANSE/82">S443</psu>
+      <psu edsu="0114_2014_UANA_NANSE/83">S444</psu>
+      <psu edsu="0114_2014_UANA_NANSE/84">S445</psu>
+      <psu edsu="0114_2014_UANA_NANSE/85">S446</psu>
+      <psu edsu="0114_2014_UANA_NANSE/86">S447</psu>
+      <psu edsu="0114_2014_UANA_NANSE/87">S448</psu>
+      <psu edsu="0114_2014_UANA_NANSE/88">S449</psu>
+      <psu edsu="0114_2014_UANA_NANSE/89">S450</psu>
+      <psu edsu="0114_2014_UANA_NANSE/90">S451</psu>
+      <psu edsu="0114_2014_UANA_NANSE/91">S452</psu>
+      <psu edsu="0114_2014_UANA_NANSE/92">S453</psu>
+      <psu edsu="0114_2014_UANA_NANSE/93">S454</psu>
+      <psu edsu="0114_2014_UANA_NANSE/94">S455</psu>
+      <psu edsu="0114_2014_UANA_NANSE/95">S456</psu>
+      <psu edsu="0114_2014_UANA_NANSE/96">S457</psu>
+      <psu edsu="0114_2014_UANA_NANSE/97">S458</psu>
+      <psu edsu="0114_2014_UANA_NANSE/98">S459</psu>
+      <psu edsu="0114_2014_UANA_NANSE/99">S460</psu>
+      <psu edsu="0114_2014_UANA_NANSE/100">S461</psu>
+      <psu edsu="0114_2014_UANA_NANSE/102">S462</psu>
+      <psu edsu="0114_2014_UANA_NANSE/103">S463</psu>
+      <psu edsu="0114_2014_UANA_NANSE/104">S464</psu>
+      <psu edsu="0114_2014_UANA_NANSE/105">S465</psu>
+      <psu edsu="0114_2014_UANA_NANSE/106">S466</psu>
+      <psu edsu="0114_2014_UANA_NANSE/107">S467</psu>
+      <psu edsu="0114_2014_UANA_NANSE/108">S468</psu>
+      <psu edsu="0114_2014_UANA_NANSE/109">S469</psu>
+      <psu edsu="0114_2014_UANA_NANSE/110">S470</psu>
+      <psu edsu="0114_2014_UANA_NANSE/111">S471</psu>
+      <psu edsu="0114_2014_UANA_NANSE/112">S472</psu>
+      <psu edsu="0114_2014_UANA_NANSE/113">S473</psu>
+    </edsupsu>
+    <psustratum>
+      <stratum psu="S1">4</stratum>
+      <stratum psu="S2">4</stratum>
+      <stratum psu="S3">4</stratum>
+      <stratum psu="S4">4</stratum>
+      <stratum psu="S5">5</stratum>
+      <stratum psu="S6">5</stratum>
+      <stratum psu="S7">5</stratum>
+      <stratum psu="S8">4</stratum>
+      <stratum psu="S9">1</stratum>
+      <stratum psu="S10">1</stratum>
+      <stratum psu="S11">1</stratum>
+      <stratum psu="S12">1</stratum>
+      <stratum psu="S13">1</stratum>
+      <stratum psu="S14">1</stratum>
+      <stratum psu="S15">1</stratum>
+      <stratum psu="S16">21</stratum>
+      <stratum psu="S17">21</stratum>
+      <stratum psu="S18">21</stratum>
+      <stratum psu="S19">23</stratum>
+      <stratum psu="S20">23</stratum>
+      <stratum psu="S21">21</stratum>
+      <stratum psu="S22">21</stratum>
+      <stratum psu="S23">21</stratum>
+      <stratum psu="S24">21</stratum>
+      <stratum psu="S25">3</stratum>
+      <stratum psu="S26">21</stratum>
+      <stratum psu="S27">22</stratum>
+      <stratum psu="S28">18</stratum>
+      <stratum psu="S29">18</stratum>
+      <stratum psu="S30">18</stratum>
+      <stratum psu="S31">18</stratum>
+      <stratum psu="S32">22</stratum>
+      <stratum psu="S33">3</stratum>
+      <stratum psu="S34">11</stratum>
+      <stratum psu="S35">11</stratum>
+      <stratum psu="S36">11</stratum>
+      <stratum psu="S37">11</stratum>
+      <stratum psu="S38">11</stratum>
+      <stratum psu="S39">11</stratum>
+      <stratum psu="S40">11</stratum>
+      <stratum psu="S41">11</stratum>
+      <stratum psu="S42">11</stratum>
+      <stratum psu="S43">11</stratum>
+      <stratum psu="S44">11</stratum>
+      <stratum psu="S45">11</stratum>
+      <stratum psu="S46">11</stratum>
+      <stratum psu="S47">3</stratum>
+      <stratum psu="S48">3</stratum>
+      <stratum psu="S49">3</stratum>
+      <stratum psu="S50">3</stratum>
+      <stratum psu="S51">3</stratum>
+      <stratum psu="S52">21</stratum>
+      <stratum psu="S53">1</stratum>
+      <stratum psu="S54">3</stratum>
+      <stratum psu="S55">3</stratum>
+      <stratum psu="S56">3</stratum>
+      <stratum psu="S57">3</stratum>
+      <stratum psu="S58">3</stratum>
+      <stratum psu="S59">2</stratum>
+      <stratum psu="S60">12</stratum>
+      <stratum psu="S61">12</stratum>
+      <stratum psu="S62">12</stratum>
+      <stratum psu="S63">11</stratum>
+      <stratum psu="S64">11</stratum>
+      <stratum psu="S65">11</stratum>
+      <stratum psu="S66">12</stratum>
+      <stratum psu="S67">12</stratum>
+      <stratum psu="S68">12</stratum>
+      <stratum psu="S69">12</stratum>
+      <stratum psu="S70">7</stratum>
+      <stratum psu="S71">7</stratum>
+      <stratum psu="S72">7</stratum>
+      <stratum psu="S73">7</stratum>
+      <stratum psu="S74">7</stratum>
+      <stratum psu="S75">7</stratum>
+      <stratum psu="S76">7</stratum>
+      <stratum psu="S77">12</stratum>
+      <stratum psu="S78">12</stratum>
+      <stratum psu="S79">12</stratum>
+      <stratum psu="S80">12</stratum>
+      <stratum psu="S81">12</stratum>
+      <stratum psu="S82">12</stratum>
+      <stratum psu="S83">12</stratum>
+      <stratum psu="S84">2</stratum>
+      <stratum psu="S85">2</stratum>
+      <stratum psu="S86">12</stratum>
+      <stratum psu="S87">12</stratum>
+      <stratum psu="S88">12</stratum>
+      <stratum psu="S89">12</stratum>
+      <stratum psu="S90">12</stratum>
+      <stratum psu="S91">7</stratum>
+      <stratum psu="S92">6</stratum>
+      <stratum psu="S93">12</stratum>
+      <stratum psu="S94">6</stratum>
+      <stratum psu="S95">6</stratum>
+      <stratum psu="S96">6</stratum>
+      <stratum psu="S97">7</stratum>
+      <stratum psu="S98">8</stratum>
+      <stratum psu="S99">8</stratum>
+      <stratum psu="S100">8</stratum>
+      <stratum psu="S101">8</stratum>
+      <stratum psu="S102">11</stratum>
+      <stratum psu="S103">10</stratum>
+      <stratum psu="S104">17</stratum>
+      <stratum psu="S105">17</stratum>
+      <stratum psu="S106">17</stratum>
+      <stratum psu="S107">10</stratum>
+      <stratum psu="S108">10</stratum>
+      <stratum psu="S109">10</stratum>
+      <stratum psu="S110">10</stratum>
+      <stratum psu="S111">9</stratum>
+      <stratum psu="S112">10</stratum>
+      <stratum psu="S113">10</stratum>
+      <stratum psu="S114">10</stratum>
+      <stratum psu="S115">16</stratum>
+      <stratum psu="S116">16</stratum>
+      <stratum psu="S117">16</stratum>
+      <stratum psu="S118">16</stratum>
+      <stratum psu="S119">15</stratum>
+      <stratum psu="S120">15</stratum>
+      <stratum psu="S121">15</stratum>
+      <stratum psu="S122">16</stratum>
+      <stratum psu="S123">16</stratum>
+      <stratum psu="S124">20</stratum>
+      <stratum psu="S125">20</stratum>
+      <stratum psu="S126">20</stratum>
+      <stratum psu="S127">20</stratum>
+      <stratum psu="S128">20</stratum>
+      <stratum psu="S129">20</stratum>
+      <stratum psu="S130">20</stratum>
+      <stratum psu="S131">20</stratum>
+      <stratum psu="S132">16</stratum>
+      <stratum psu="S133">16</stratum>
+      <stratum psu="S134">16</stratum>
+      <stratum psu="S135">16</stratum>
+      <stratum psu="S136">16</stratum>
+      <stratum psu="S137">16</stratum>
+      <stratum psu="S138">16</stratum>
+      <stratum psu="S139">10</stratum>
+      <stratum psu="S140">6</stratum>
+      <stratum psu="S141">6</stratum>
+      <stratum psu="S142">6</stratum>
+      <stratum psu="S143">6</stratum>
+      <stratum psu="S144">6</stratum>
+      <stratum psu="S145">6</stratum>
+      <stratum psu="S146">12</stratum>
+      <stratum psu="S147">12</stratum>
+      <stratum psu="S148">6</stratum>
+      <stratum psu="S149">6</stratum>
+      <stratum psu="S150">6</stratum>
+      <stratum psu="S151">6</stratum>
+      <stratum psu="S152">2</stratum>
+      <stratum psu="S153">2</stratum>
+      <stratum psu="S154">2</stratum>
+      <stratum psu="S155">2</stratum>
+      <stratum psu="S156">6</stratum>
+      <stratum psu="S157">6</stratum>
+      <stratum psu="S158">6</stratum>
+      <stratum psu="S159">6</stratum>
+      <stratum psu="S160">6</stratum>
+      <stratum psu="S161">6</stratum>
+      <stratum psu="S162">6</stratum>
+      <stratum psu="S163">2</stratum>
+      <stratum psu="S164">6</stratum>
+      <stratum psu="S165">2</stratum>
+      <stratum psu="S166">2</stratum>
+      <stratum psu="S167">2</stratum>
+      <stratum psu="S168">2</stratum>
+      <stratum psu="S169">2</stratum>
+      <stratum psu="S170">1</stratum>
+      <stratum psu="S171">1</stratum>
+      <stratum psu="S172">2</stratum>
+      <stratum psu="S173">2</stratum>
+      <stratum psu="S174">4</stratum>
+      <stratum psu="S175">4</stratum>
+      <stratum psu="S176">4</stratum>
+      <stratum psu="S177">4</stratum>
+      <stratum psu="S178">4</stratum>
+      <stratum psu="S179">4</stratum>
+      <stratum psu="S180">4</stratum>
+      <stratum psu="S181">4</stratum>
+      <stratum psu="S182">4</stratum>
+      <stratum psu="S183">5</stratum>
+      <stratum psu="S184">4</stratum>
+      <stratum psu="S185">24</stratum>
+      <stratum psu="S186">24</stratum>
+      <stratum psu="S187">24</stratum>
+      <stratum psu="S188">24</stratum>
+      <stratum psu="S189">24</stratum>
+      <stratum psu="S190">24</stratum>
+      <stratum psu="S191">24</stratum>
+      <stratum psu="S192">24</stratum>
+      <stratum psu="S193">24</stratum>
+      <stratum psu="S194">23</stratum>
+      <stratum psu="S195">23</stratum>
+      <stratum psu="S196">23</stratum>
+      <stratum psu="S197">23</stratum>
+      <stratum psu="S198">23</stratum>
+      <stratum psu="S199">23</stratum>
+      <stratum psu="S200">23</stratum>
+      <stratum psu="S201">21</stratum>
+      <stratum psu="S202">21</stratum>
+      <stratum psu="S203">21</stratum>
+      <stratum psu="S204">1</stratum>
+      <stratum psu="S205">1</stratum>
+      <stratum psu="S206">1</stratum>
+      <stratum psu="S207">1</stratum>
+      <stratum psu="S208">1</stratum>
+      <stratum psu="S209">1</stratum>
+      <stratum psu="S210">1</stratum>
+      <stratum psu="S211">1</stratum>
+      <stratum psu="S212">5</stratum>
+      <stratum psu="S213">5</stratum>
+      <stratum psu="S214">5</stratum>
+      <stratum psu="S215">4</stratum>
+      <stratum psu="S216">4</stratum>
+      <stratum psu="S217">4</stratum>
+      <stratum psu="S218">4</stratum>
+      <stratum psu="S219">4</stratum>
+      <stratum psu="S220">5</stratum>
+      <stratum psu="S221">5</stratum>
+      <stratum psu="S222">5</stratum>
+      <stratum psu="S223">1</stratum>
+      <stratum psu="S224">1</stratum>
+      <stratum psu="S225">1</stratum>
+      <stratum psu="S226">1</stratum>
+      <stratum psu="S227">1</stratum>
+      <stratum psu="S228">21</stratum>
+      <stratum psu="S229">23</stratum>
+      <stratum psu="S230">23</stratum>
+      <stratum psu="S231">23</stratum>
+      <stratum psu="S232">23</stratum>
+      <stratum psu="S233">23</stratum>
+      <stratum psu="S234">23</stratum>
+      <stratum psu="S235">23</stratum>
+      <stratum psu="S236">23</stratum>
+      <stratum psu="S237">23</stratum>
+      <stratum psu="S238">23</stratum>
+      <stratum psu="S239">23</stratum>
+      <stratum psu="S240">21</stratum>
+      <stratum psu="S241">23</stratum>
+      <stratum psu="S242">23</stratum>
+      <stratum psu="S243">23</stratum>
+      <stratum psu="S244">23</stratum>
+      <stratum psu="S245">23</stratum>
+      <stratum psu="S246">23</stratum>
+      <stratum psu="S247">23</stratum>
+      <stratum psu="S248">23</stratum>
+      <stratum psu="S249">21</stratum>
+      <stratum psu="S250">21</stratum>
+      <stratum psu="S251">21</stratum>
+      <stratum psu="S252">22</stratum>
+      <stratum psu="S253">22</stratum>
+      <stratum psu="S254">22</stratum>
+      <stratum psu="S255">22</stratum>
+      <stratum psu="S256">22</stratum>
+      <stratum psu="S257">23</stratum>
+      <stratum psu="S258">23</stratum>
+      <stratum psu="S259">25</stratum>
+      <stratum psu="S260">25</stratum>
+      <stratum psu="S261">24</stratum>
+      <stratum psu="S262">24</stratum>
+      <stratum psu="S263">25</stratum>
+      <stratum psu="S264">22</stratum>
+      <stratum psu="S265">22</stratum>
+      <stratum psu="S266">22</stratum>
+      <stratum psu="S267">22</stratum>
+      <stratum psu="S268">18</stratum>
+      <stratum psu="S269">18</stratum>
+      <stratum psu="S270">18</stratum>
+      <stratum psu="S271">18</stratum>
+      <stratum psu="S272">22</stratum>
+      <stratum psu="S273">22</stratum>
+      <stratum psu="S274">22</stratum>
+      <stratum psu="S275">25</stratum>
+      <stratum psu="S276">26</stratum>
+      <stratum psu="S277">26</stratum>
+      <stratum psu="S278">26</stratum>
+      <stratum psu="S279">26</stratum>
+      <stratum psu="S280">26</stratum>
+      <stratum psu="S281">26</stratum>
+      <stratum psu="S282">26</stratum>
+      <stratum psu="S283">26</stratum>
+      <stratum psu="S284">25</stratum>
+      <stratum psu="S285">25</stratum>
+      <stratum psu="S286">25</stratum>
+      <stratum psu="S287">25</stratum>
+      <stratum psu="S288">25</stratum>
+      <stratum psu="S289">25</stratum>
+      <stratum psu="S290">24</stratum>
+      <stratum psu="S291">24</stratum>
+      <stratum psu="S292">24</stratum>
+      <stratum psu="S293">24</stratum>
+      <stratum psu="S294">24</stratum>
+      <stratum psu="S295">24</stratum>
+      <stratum psu="S296">24</stratum>
+      <stratum psu="S297">24</stratum>
+      <stratum psu="S298">24</stratum>
+      <stratum psu="S299">24</stratum>
+      <stratum psu="S300">24</stratum>
+      <stratum psu="S301">24</stratum>
+      <stratum psu="S302">24</stratum>
+      <stratum psu="S303">24</stratum>
+      <stratum psu="S304">24</stratum>
+      <stratum psu="S305">24</stratum>
+      <stratum psu="S306">24</stratum>
+      <stratum psu="S307">24</stratum>
+      <stratum psu="S308">24</stratum>
+      <stratum psu="S309">24</stratum>
+      <stratum psu="S310">24</stratum>
+      <stratum psu="S311">24</stratum>
+      <stratum psu="S312">25</stratum>
+      <stratum psu="S313">25</stratum>
+      <stratum psu="S314">25</stratum>
+      <stratum psu="S315">25</stratum>
+      <stratum psu="S316">25</stratum>
+      <stratum psu="S317">22</stratum>
+      <stratum psu="S318">22</stratum>
+      <stratum psu="S319">22</stratum>
+      <stratum psu="S320">22</stratum>
+      <stratum psu="S321">22</stratum>
+      <stratum psu="S322">18</stratum>
+      <stratum psu="S323">26</stratum>
+      <stratum psu="S324">26</stratum>
+      <stratum psu="S325">18</stratum>
+      <stratum psu="S326">18</stratum>
+      <stratum psu="S327">26</stratum>
+      <stratum psu="S328">26</stratum>
+      <stratum psu="S329">26</stratum>
+      <stratum psu="S330">26</stratum>
+      <stratum psu="S331">26</stratum>
+      <stratum psu="S332">26</stratum>
+      <stratum psu="S333">18</stratum>
+      <stratum psu="S334">19</stratum>
+      <stratum psu="S335">26</stratum>
+      <stratum psu="S336">26</stratum>
+      <stratum psu="S337">19</stratum>
+      <stratum psu="S338">19</stratum>
+      <stratum psu="S339">19</stratum>
+      <stratum psu="S340">18</stratum>
+      <stratum psu="S341">19</stratum>
+      <stratum psu="S342">19</stratum>
+      <stratum psu="S343">19</stratum>
+      <stratum psu="S344">19</stratum>
+      <stratum psu="S345">19</stratum>
+      <stratum psu="S346">19</stratum>
+      <stratum psu="S347">19</stratum>
+      <stratum psu="S348">19</stratum>
+      <stratum psu="S349">11</stratum>
+      <stratum psu="S350">17</stratum>
+      <stratum psu="S351">17</stratum>
+      <stratum psu="S352">17</stratum>
+      <stratum psu="S353">17</stratum>
+      <stratum psu="S354">11</stratum>
+      <stratum psu="S355">11</stratum>
+      <stratum psu="S356">11</stratum>
+      <stratum psu="S357">11</stratum>
+      <stratum psu="S358">11</stratum>
+      <stratum psu="S359">12</stratum>
+      <stratum psu="S360">6</stratum>
+      <stratum psu="S361">6</stratum>
+      <stratum psu="S362">7</stratum>
+      <stratum psu="S363">7</stratum>
+      <stratum psu="S364">7</stratum>
+      <stratum psu="S365">8</stratum>
+      <stratum psu="S366">8</stratum>
+      <stratum psu="S367">8</stratum>
+      <stratum psu="S368">10</stratum>
+      <stratum psu="S369">10</stratum>
+      <stratum psu="S370">10</stratum>
+      <stratum psu="S371">10</stratum>
+      <stratum psu="S372">9</stratum>
+      <stratum psu="S373">8</stratum>
+      <stratum psu="S374">10</stratum>
+      <stratum psu="S375">10</stratum>
+      <stratum psu="S376">8</stratum>
+      <stratum psu="S377">8</stratum>
+      <stratum psu="S378">8</stratum>
+      <stratum psu="S379">8</stratum>
+      <stratum psu="S380">8</stratum>
+      <stratum psu="S381">8</stratum>
+      <stratum psu="S382">8</stratum>
+      <stratum psu="S383">8</stratum>
+      <stratum psu="S384">8</stratum>
+      <stratum psu="S385">8</stratum>
+      <stratum psu="S386">8</stratum>
+      <stratum psu="S387">7</stratum>
+      <stratum psu="S388">7</stratum>
+      <stratum psu="S389">7</stratum>
+      <stratum psu="S390">7</stratum>
+      <stratum psu="S391">7</stratum>
+      <stratum psu="S392">7</stratum>
+      <stratum psu="S393">7</stratum>
+      <stratum psu="S394">7</stratum>
+      <stratum psu="S395">7</stratum>
+      <stratum psu="S396">7</stratum>
+      <stratum psu="S397">7</stratum>
+      <stratum psu="S398">7</stratum>
+      <stratum psu="S399">7</stratum>
+      <stratum psu="S400">7</stratum>
+      <stratum psu="S401">7</stratum>
+      <stratum psu="S402">7</stratum>
+      <stratum psu="S403">7</stratum>
+      <stratum psu="S404">7</stratum>
+      <stratum psu="S405">7</stratum>
+      <stratum psu="S406">8</stratum>
+      <stratum psu="S407">8</stratum>
+      <stratum psu="S408">7</stratum>
+      <stratum psu="S409">7</stratum>
+      <stratum psu="S410">7</stratum>
+      <stratum psu="S411">7</stratum>
+      <stratum psu="S412">7</stratum>
+      <stratum psu="S413">7</stratum>
+      <stratum psu="S414">7</stratum>
+      <stratum psu="S415">7</stratum>
+      <stratum psu="S416">7</stratum>
+      <stratum psu="S417">7</stratum>
+      <stratum psu="S418">7</stratum>
+      <stratum psu="S419">8</stratum>
+      <stratum psu="S420">8</stratum>
+      <stratum psu="S421">13</stratum>
+      <stratum psu="S422">13</stratum>
+      <stratum psu="S423">13</stratum>
+      <stratum psu="S424">13</stratum>
+      <stratum psu="S425">13</stratum>
+      <stratum psu="S426">13</stratum>
+      <stratum psu="S427">13</stratum>
+      <stratum psu="S428">13</stratum>
+      <stratum psu="S429">13</stratum>
+      <stratum psu="S430">13</stratum>
+      <stratum psu="S431">13</stratum>
+      <stratum psu="S432">13</stratum>
+      <stratum psu="S433">14</stratum>
+      <stratum psu="S434">13</stratum>
+      <stratum psu="S435">14</stratum>
+      <stratum psu="S436">14</stratum>
+      <stratum psu="S437">14</stratum>
+      <stratum psu="S438">9</stratum>
+      <stratum psu="S439">10</stratum>
+      <stratum psu="S440">9</stratum>
+      <stratum psu="S441">9</stratum>
+      <stratum psu="S442">14</stratum>
+      <stratum psu="S443">9</stratum>
+      <stratum psu="S444">9</stratum>
+      <stratum psu="S445">9</stratum>
+      <stratum psu="S446">14</stratum>
+      <stratum psu="S447">14</stratum>
+      <stratum psu="S448">14</stratum>
+      <stratum psu="S449">14</stratum>
+      <stratum psu="S450">13</stratum>
+      <stratum psu="S451">13</stratum>
+      <stratum psu="S452">13</stratum>
+      <stratum psu="S453">13</stratum>
+      <stratum psu="S454">13</stratum>
+      <stratum psu="S455">14</stratum>
+      <stratum psu="S456">14</stratum>
+      <stratum psu="S457">13</stratum>
+      <stratum psu="S458">14</stratum>
+      <stratum psu="S459">14</stratum>
+      <stratum psu="S460">9</stratum>
+      <stratum psu="S461">9</stratum>
+      <stratum psu="S462">15</stratum>
+      <stratum psu="S463">15</stratum>
+      <stratum psu="S464">14</stratum>
+      <stratum psu="S465">14</stratum>
+      <stratum psu="S466">14</stratum>
+      <stratum psu="S467">14</stratum>
+      <stratum psu="S468">15</stratum>
+      <stratum psu="S469">15</stratum>
+      <stratum psu="S470">15</stratum>
+      <stratum psu="S471">15</stratum>
+      <stratum psu="S472">15</stratum>
+      <stratum psu="S473">16</stratum>
+    </psustratum>
+    <stratumpolygon>
+      <value polygonkey="1" polygonvariable="includeintotal">true</value>
+      <value polygonkey="1" polygonvariable="polygon">MULTIPOLYGON (((15 73, 23 73, 23 71.5, 15 71.5, 15 73)))</value>
+      <value polygonkey="2" polygonvariable="includeintotal">true</value>
+      <value polygonkey="2" polygonvariable="polygon">MULTIPOLYGON (((23 71.5, 23 72.5, 29 72.5, 29 73, 30 73, 30 72, 26 72, 26 71.5, 23 71.5, 23 71.5)))</value>
+      <value polygonkey="3" polygonvariable="includeintotal">true</value>
+      <value polygonkey="3" polygonvariable="polygon">MULTIPOLYGON (((23 72.5, 23 73.5, 27 73.5, 27 74, 30 74, 30 73, 29 73, 29 72.5, 23 72.5, 23 72.5)))</value>
+      <value polygonkey="4" polygonvariable="includeintotal">true</value>
+      <value polygonkey="4" polygonvariable="polygon">MULTIPOLYGON (((17 70, 17 70.5, 20 70.5, 20 71, 22 71, 22 71.5, 26 71.5, 26 71.2, 25.5 71.2, 25.5 71.12, 24 71.12, 22.25 70.75, 21.5 70.4, 19 70.25, 18.25 70, 17 70, 17 70)))</value>
+      <value polygonkey="5" polygonvariable="includeintotal">true</value>
+      <value polygonkey="5" polygonvariable="polygon">MULTIPOLYGON (((17 70.5, 17 71.5, 22 71.5, 22 71, 20 71, 20 70.5, 17 70.5, 17 70.5)))</value>
+      <value polygonkey="6" polygonvariable="includeintotal">true</value>
+      <value polygonkey="6" polygonvariable="polygon">MULTIPOLYGON (((26 71.12, 26 72, 30 72, 30 71, 31 71, 31 70.53, 30 70.75, 28.25 71, 28.25 71.12, 27.25 71.12, 27.25 71, 26.25 71, 26 71.12, 26 71.12)))</value>
+      <value polygonkey="7" polygonvariable="includeintotal">true</value>
+      <value polygonkey="7" polygonvariable="polygon">MULTIPOLYGON (((29.75 69.88, 29.75 70, 30.25 70, 31 70.25, 31 71, 33 71, 33 70.5, 35 70.5, 35 70, 38 70, 38 69.5, 40 69.5, 40 68.25, 39.5 68.25, 37.5 69, 37 69.25, 36.5 69.25, 34.25 69.62, 33.5 69.62, 33.5 69.88, 32.25 70.12, 31.25 70, 31.25 69.88, 29.75 69.88, 29.75 69.88)))</value>
+      <value polygonkey="8" polygonvariable="includeintotal">true</value>
+      <value polygonkey="8" polygonvariable="polygon">MULTIPOLYGON (((38 69.5, 38 70, 35 70, 35 70.5, 33 70.5, 33 71, 34 71, 34 71.5, 38 71.5, 38 71, 40 71, 40 69.5, 38 69.5, 38 69.5)))</value>
+      <value polygonkey="9" polygonvariable="includeintotal">true</value>
+      <value polygonkey="9" polygonvariable="polygon">MULTIPOLYGON (((40 71, 40 71.5, 42 71.5, 42 72, 46 72, 46 71, 40 71, 40 71)))</value>
+      <value polygonkey="10" polygonvariable="includeintotal">true</value>
+      <value polygonkey="10" polygonvariable="polygon">MULTIPOLYGON (((38 71, 38 71.5, 36 71.5, 36 72, 41 72, 41 72.5, 47 72.5, 47 72, 42 72, 42 71.5, 40 71.5, 40 71, 38 71, 38 71)))</value>
+      <value polygonkey="11" polygonvariable="includeintotal">true</value>
+      <value polygonkey="11" polygonvariable="polygon">MULTIPOLYGON (((34 71.5, 34 73, 30 73, 30 74, 36 74, 36 71.5, 34 71.5, 34 71.5)))</value>
+      <value polygonkey="12" polygonvariable="includeintotal">true</value>
+      <value polygonkey="12" polygonvariable="polygon">MULTIPOLYGON (((30 71, 30 73, 34 73, 34 71, 30 71, 30 71)))</value>
+      <value polygonkey="13" polygonvariable="includeintotal">true</value>
+      <value polygonkey="13" polygonvariable="polygon">MULTIPOLYGON (((39.999999999999986 69.99999828564533, 44.999999999999986 69.99999828564535, 44.99999999999999 70.49999815700711, 47 70.49999815700708, 47 69.9999982856453, 46.992663627080994 69.04778880262228, 43 68.99999855948792, 43.02122570502405 68.48312456197881, 40.086728704251776 68.47519689697059, 39.999999999999986 69.99999828564533)))</value>
+      <value polygonkey="14" polygonvariable="includeintotal">true</value>
+      <value polygonkey="14" polygonvariable="polygon">MULTIPOLYGON (((39.99999999999999 69.99999897138713, 39.99999999999997 70.99999882078187, 47.999999999999986 70.99999882078187, 48.000000000000014 71.49999875143861, 49.568381924191556 71.521375300908, 49.613181995246265 69.99866650416264, 47 69.9999989713871, 47.00000000000002 70.49999889420423, 45 70.49999889420423, 45 69.9999989713871, 39.99999999999999 69.99999897138713, 39.99999999999999 69.99999897138713)))</value>
+      <value polygonkey="15" polygonvariable="includeintotal">true</value>
+      <value polygonkey="15" polygonvariable="polygon">MULTIPOLYGON (((46.000000000000014 70.99999882078183, 46.00000000000002 71.99999868647794, 47 71.99999868647791, 46.99999999999999 72.49999862618613, 47.99999999999999 72.49999862618613, 48.00000000000004 72.99999857083209, 50.000000000000014 72.99999857083205, 50.000000000000014 73.49999852066475, 49.00000000000001 73.49999852066472, 49.00000000000002 73.99999847591333, 52.47506420228686 73.98627033097155, 51.82470177254296 73.13231309941854, 51.3825564723603 72.49583472786236, 50.99999999999996 71.99999868647788, 49.00000000000005 71.99999868647794, 49.00000000000001 71.49999875143858, 48.00000000000002 71.49999875143857, 47.999999999999986 70.99999882078188, 46.000000000000014 70.99999882078183, 46.000000000000014 70.99999882078183)))</value>
+      <value polygonkey="16" polygonvariable="includeintotal">true</value>
+      <value polygonkey="16" polygonvariable="polygon">MULTIPOLYGON (((40.99999999999999 72.49999954206203, 41.000000000000014 72.99999952361071, 42 72.99999952361068, 42.00000000000002 73.49999950688823, 43.000000000000014 73.49999950688823, 43.00000000000002 73.99999949197107, 49.00000000000001 73.9999994919711, 49.00000000000001 73.49999950688823, 50.000000000000014 73.49999950688823, 50.000000000000014 72.99999952361068, 48.000000000000014 72.99999952361071, 48 72.499999542062, 40.99999999999999 72.49999954206203, 40.99999999999999 72.49999954206203)))</value>
+      <value polygonkey="17" polygonvariable="includeintotal">true</value>
+      <value polygonkey="17" polygonvariable="polygon">MULTIPOLYGON (((36.00000000000001 71.9999995621593, 36.000000000000014 73.99999949197107, 41.02261662943073 73.99117841146308, 40.94839057504111 73.58371067435908, 41.000000000000014 72.99999952361071, 41.000000000000014 71.99999956215929, 36.00000000000001 71.9999995621593, 36.00000000000001 71.9999995621593)))</value>
+      <value polygonkey="18" polygonvariable="includeintotal">true</value>
+      <value polygonkey="18" polygonvariable="polygon">MULTIPOLYGON (((30 74, 30 76.5, 38 76.5, 38 76, 36 76, 36 75.5, 34 75.5, 34 75, 36 75, 36 74, 30 74, 30 74)))</value>
+      <value polygonkey="19" polygonvariable="includeintotal">true</value>
+      <value polygonkey="19" polygonvariable="polygon">MULTIPOLYGON (((36 73.99999796788443, 35.999999999999986 74.99999787128588, 34.000000000000014 74.99999787128591, 34 75.49999783481778, 36 75.4999978348178, 36.00000000000002 75.9999978064919, 37.99999999999997 75.99999780649193, 38.00000000000007 76.49999778645825, 39.99999999999999 76.49999778645822, 40.00000000000003 74.99999787128591, 40.919071234587804 75.0194069011559, 40.72007067384088 73.966083492585, 36 73.99999796788443, 36 73.99999796788443)))</value>
+      <value polygonkey="20" polygonvariable="includeintotal">true</value>
+      <value polygonkey="20" polygonvariable="polygon">MULTIPOLYGON (((43.99999999999999 73.99999898394215, 43.89862267805174 74.70023497647871, 52.63253293976551 74.66357733867352, 52.51783871374788 73.97678844605299, 43.99999999999999 73.99999898394215, 43.99999999999999 73.99999898394215)))</value>
+      <value polygonkey="21" polygonvariable="includeintotal">true</value>
+      <value polygonkey="21" polygonvariable="polygon">MULTIPOLYGON (((15 73, 15 74.5, 16 74.5, 16 74, 17 74, 17 73.5, 21 73.5, 21 74, 26 74, 26 74.5, 28 74.5, 28 74, 27 74, 27 73.5, 23 73.5, 23 73, 15 73, 15 73)))</value>
+      <value polygonkey="22" polygonvariable="includeintotal">true</value>
+      <value polygonkey="22" polygonvariable="polygon">MULTIPOLYGON (((28 74, 28 74.5, 23 74.5, 23 75, 24 75, 24 75.5, 25 75.5, 25 76, 26 76, 26 76.5, 30 76.5, 30 74, 28 74, 28 74)))</value>
+      <value polygonkey="23" polygonvariable="includeintotal">true</value>
+      <value polygonkey="23" polygonvariable="polygon">MULTIPOLYGON (((17 73.5, 17 74, 16 74, 16 74.5, 26 74.5, 26 74, 21 74, 21 73.5, 17 73.5, 17 73.5)))</value>
+      <value polygonkey="24" polygonvariable="includeintotal">false</value>
+      <value polygonkey="24" polygonvariable="polygon">MULTIPOLYGON (((15 74.5, 15 75, 14 75.5, 14 76.5, 13.3 76.69, 12.38 77, 11.51 77.12, 11 77.5, 9.55 77.94, 8.43 78.82, 8.44 79.09, 8 79.35, 8 80, 10.5 80, 10.5 79.5, 10.8 79.32, 11.08 79.15, 11.17 79.07, 11.61 79.05, 11.92 79, 11.98 78.96, 11.77 78.96, 11.42 78.99, 11.24 78.97, 11.5 78.89, 11.73 78.83, 11.38 78.76, 11.15 78.8, 10.96 78.9, 10.44 78.91, 10.43 78.79, 10.68 78.64, 11.06 78.39, 11.38 78.34, 11.8 78.19, 12.11 78.16, 12.27 78.19, 11.95 78.44, 11.9 78.51, 12.22 78.51, 12.95 78.18, 13.38 78.04, 13.09 77.98, 13.74 77.7, 14.4 77.73, 14.83 77.57, 14.62 77.55, 14.39 77.59, 13.93 77.58, 13.75 77.49, 13.8 77.38, 14.18 77.17, 14.52 77.06, 15.22 76.99, 15.8 76.99, 15.82 76.99, 15.2 76.89, 15.47 76.71, 16.07 76.49, 16.62 76.4, 17.5 76.5, 19 76.5, 19 74.5, 15 74.5)))</value>
+      <value polygonkey="25" polygonvariable="includeintotal">false</value>
+      <value polygonkey="25" polygonvariable="polygon">MULTIPOLYGON (((19 74.5, 19 76.5, 17.31 76.5, 17.6 76.97, 17.81 77.36, 17.98 77.43, 18.41 77.45, 18.5 77.5, 18.66 78, 20.67 78, 20.52 77.5, 21 77, 22.5 77, 24 77.5, 26 77.5, 26 76, 25 76, 25 75.5, 24 75.5, 24 75, 23 75, 23 74.5, 19 74.5)))</value>
+      <value polygonkey="26" polygonvariable="includeintotal">false</value>
+      <value polygonkey="26" polygonvariable="polygon">MULTIPOLYGON (((26 76.5, 26 77.5, 24 77.5, 24.67 77.83, 24 78, 24 78.5, 39 78.5, 39 78, 41 78, 41 77.5, 42 77.5, 42 77, 43 77, 43 76.5, 40 76.5, 38 76.5, 30 76.5, 26 76.5)))</value>
+    </stratumpolygon>
+    <temporal>
+    </temporal>
+    <gearfactor>
+    </gearfactor>
+    <spatial>
+    </spatial>
+    <platformfactor>
+    </platformfactor>
+    <covparam>
+    </covparam>
+    <ageerror>
+    </ageerror>
+    <stratumneighbour>
+    </stratumneighbour>
+  </processdata>
+</project>
