@@ -2,7 +2,7 @@
 #' @description
 #' A short description...
 #' @param path Path to the txt file
-#' @returns A `number`
+#' @returns The `number` of strata covered in the survey
 #' @importFrom stringr str_count
 #' @examples
 #' path <- system.file("extdata/stox_winter_2019_2019/output/baseline/report/2_EstimateByPopulationCategory_Reports_Abundance.txt", package = "StoXreader")
