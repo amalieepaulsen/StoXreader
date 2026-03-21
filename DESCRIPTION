@@ -25,4 +25,5 @@ Imports:
     readr,
     rlang,
     stringr,
-    tidyr
+    tidyr,
+    utils

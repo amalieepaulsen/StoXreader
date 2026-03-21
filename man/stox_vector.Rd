@@ -10,7 +10,7 @@ stox_vector(path)
 \item{path}{Path to the txt file. Passed on from find_all_strata() or read_stox()}
 }
 \value{
-A `character vector object`.
+A `character` vector object.
 }
 \description{
 stox_vector() is a nested function in find_all_strata() and read_stox() that
@@ -19,8 +19,8 @@ character vector so the number of lines can be compared.
 }
 \examples{
 path <- system.file(
-"stox_winter_2019/2_EstimateByPopulationCategory_Reports_Abundance.txt",
-package = "StoXreader")
+  "stox_winter_2019/2_EstimateByPopulationCategory_Reports_Abundance.txt",
+  package = "StoXreader")
 
 stox_vector(path)
 }

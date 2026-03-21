@@ -4,13 +4,13 @@
 #' takes a file path and converts the first column of the txt file into a
 #' character vector so the number of lines can be compared.
 #' @param path Path to the txt file. Passed on from find_all_strata() or read_stox()
-#' @returns A `character vector object`.
+#' @returns A `character` vector object.
 #' @importFrom readr read_table
 #' @importFrom dplyr pull
 #' @examples
 #' path <- system.file(
-#' "stox_winter_2019/2_EstimateByPopulationCategory_Reports_Abundance.txt",
-#' package = "StoXreader")
+#'   "stox_winter_2019/2_EstimateByPopulationCategory_Reports_Abundance.txt",
+#'   package = "StoXreader")
 #'
 #' stox_vector(path)
 #' @export

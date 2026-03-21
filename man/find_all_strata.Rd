@@ -20,8 +20,8 @@ location to extract data from is needed.
 }
 \examples{
 path <- system.file(
-"stox_winter_2019/2_EstimateByPopulationCategory_Reports_Abundance.txt",
-package = "StoXreader")
+  "stox_winter_2019/2_EstimateByPopulationCategory_Reports_Abundance.txt",
+  package = "StoXreader")
 
 find_all_strata(path)
 }

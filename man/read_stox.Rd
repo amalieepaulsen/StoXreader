@@ -18,8 +18,9 @@ A `data.frame`
 }
 \description{
 Publicly available StoX files of Barents Sea Northeast Arctic cod bottom
-trawl index in winter are divided into strata. The way these are formatted
-makes them require additional inputs to be converted into data frames.
+trawl index in winter are divided into strata. The way these files are
+formatted makes them require additional inputs to be converted into data
+frames.
 
 The three files in ~/output/baseline/report are reports on abundance, biomass,
 and mean weight. read_stox() takes these three files, and imports and merges
@@ -27,14 +28,14 @@ them into a single data frame.
 }
 \examples{
 a_path <- system.file(
-"stox_winter_2019/2_EstimateByPopulationCategory_Reports_Abundance.txt",
-package = "StoXreader")
+  "stox_winter_2019/2_EstimateByPopulationCategory_Reports_Abundance.txt",
+  package = "StoXreader")
 b_path <- system.file(
-"stox_winter_2019/2_EstimateByPopulationCategory_Reports_Biomass.txt",
-package = "StoXreader")
+  "stox_winter_2019/2_EstimateByPopulationCategory_Reports_Biomass.txt",
+  package = "StoXreader")
 w_path <- system.file(
-"stox_winter_2019/2_EstimateByPopulationCategory_Reports_MeanWeight.txt",
-package = "StoXreader")
+  "stox_winter_2019/2_EstimateByPopulationCategory_Reports_MeanWeight.txt",
+  package = "StoXreader")
 
 read_stox(a_path, b_path, w_path)
 }
