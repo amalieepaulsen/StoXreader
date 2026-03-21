@@ -15,7 +15,7 @@
 #' @examples
 #' vector <- c("LenGrp", NA, "__", "10-15", "LenGrp", "15-20", "___", "LenGrp")
 #' string <- "LenGrp"
-#' n_distance <- 1
+#' n_distance <- 1 # E.g. if it is the line after "LenGrp" that is of interest.
 #'
 #' locate_startend(vector, string, n_distance)
 #' @export

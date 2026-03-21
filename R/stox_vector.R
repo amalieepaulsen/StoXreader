@@ -6,6 +6,8 @@
 #' @param path Path to the txt file. Passed on from find_all_strata() or read_stox()
 #' @returns A `character` vector object.
 #' @importFrom readr read_table
+#' @importFrom readr cols
+#' @importFrom readr col_character
 #' @importFrom dplyr pull
 #' @examples
 #' path <- system.file(
@@ -20,6 +22,7 @@ stox_vector <- function(path) {
   # the function.
   suppressWarnings({
     firstcol <- readr::read_table(
-      file = path, col_names = FALSE, skip_empty_rows = FALSE)
+      file = path, col_names = FALSE, col_types = cols(col_character()),
+      skip_empty_rows = FALSE)
     dplyr::pull(firstcol, .data$X1)})
 }

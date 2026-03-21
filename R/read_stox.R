@@ -58,9 +58,9 @@ read_stox <- function(a_path, b_path, w_path) {
   w_data <- import_stox(path = w_path, line_info = line_info, report_type = "MeanWeight")
 
   # Add biomass and mean weight data to abundance data.frame.
-  a_data$"Biomass" <- b_data$Biomass
-  a_data$"MeanWeight" <- w_data$MeanWeight
+  a_data$"Biomass (kg)" <- b_data$Biomass
+  a_data$"MeanWeight (g)" <- w_data$MeanWeight
 
-  stox_data <- as.data.frame(a_data) |>
+  as.data.frame(a_data) |>
     tidyr::drop_na(.data$Abundance)
 }
