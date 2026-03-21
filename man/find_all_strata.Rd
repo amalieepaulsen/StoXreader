@@ -2,22 +2,26 @@
 % Please edit documentation in R/find_all_strata.R
 \name{find_all_strata}
 \alias{find_all_strata}
-\title{Find locations of all abundance tables per stratum}
+\title{Find locations of all tables by stratum in StoX report file}
 \usage{
 find_all_strata(path)
 }
 \arguments{
-\item{path}{Path to the txt file}
+\item{path}{Path to the txt file.}
 }
 \value{
-A `data.frame`
+A `data.frame` with the number of lines to skip on import (n_skip),
+the number of rows (n_rows), and stratum number (stratum_n).
 }
 \description{
-A helper function designed to locate all tables in a StoX file if they are
-separated by stratum. To extract the desired rows and columns, the location
-to extract data from is needed.
+find_all_strata() is designed to locate all tables in a StoX report file if
+they are separated by stratum. To import the desired rows and columns, the
+location to extract data from is needed.
 }
 \examples{
-path <- system.file("extdata/stox_winter_2019_2019/output/baseline/report/2_EstimateByPopulationCategory_Reports_Abundance.txt", package = "StoXreader")
+path <- system.file(
+"extdata/stox_winter_2019/2_EstimateByPopulationCategory_Reports_Abundance.txt",
+package = "StoXreader")
+
 find_all_strata(path)
 }

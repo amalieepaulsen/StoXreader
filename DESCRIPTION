@@ -20,3 +20,9 @@ BugReports: https://github.com/amalieepaulsen/StoXreader/issues
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
+Imports: 
+    dplyr,
+    readr,
+    rlang,
+    stringr,
+    tidyr
