@@ -1,13 +1,13 @@
 #' Read StoX report files
 #' @description
-#' Publicly available StoX files of Barents Sea Northeast Arctic cod bottom
+#' Publicly available StoX files for Barents Sea Northeast Arctic cod bottom
 #' trawl index in winter are divided into strata. The way these files are
 #' formatted makes them require additional inputs to be converted into data
 #' frames.
 #'
-#' The three files in ~/output/baseline/report are reports on abundance, biomass,
-#' and mean weight. read_stox() takes these three files, and imports and merges
-#' them into a single data frame.
+#' The three files in ~/output/baseline/report are reports on abundance,
+#' biomass, and mean weight. read_stox() takes these three files, imports them,
+#' then merges them into a single data frame.
 #' @param a_path Path to abundance txt file.
 #' @param b_path Path to biomass txt file.
 #' @param w_path Path to mean weight txt file.
@@ -16,13 +16,13 @@
 #' @importFrom rlang .data
 #' @examples
 #' a_path <- system.file(
-#'   "stox_winter_2019/2_EstimateByPopulationCategory_Reports_Abundance.txt",
+#'   "extdata/stox_winter_2019/2_EstimateByPopulationCategory_Reports_Abundance.txt",
 #'   package = "StoXreader")
 #' b_path <- system.file(
-#'   "stox_winter_2019/2_EstimateByPopulationCategory_Reports_Biomass.txt",
+#'   "extdata/stox_winter_2019/2_EstimateByPopulationCategory_Reports_Biomass.txt",
 #'   package = "StoXreader")
 #' w_path <- system.file(
-#'   "stox_winter_2019/2_EstimateByPopulationCategory_Reports_MeanWeight.txt",
+#'   "extdata/stox_winter_2019/2_EstimateByPopulationCategory_Reports_MeanWeight.txt",
 #'   package = "StoXreader")
 #'
 #' read_stox(a_path, b_path, w_path)
@@ -53,11 +53,23 @@ read_stox <- function(a_path, b_path, w_path) {
   }
   # When everything has been verified, start calling on functions to read files.
   line_info <- find_all_strata(path = a_path)
-  a_data <- import_stox(path = a_path, line_info = line_info, report_type = "Abundance")
-  b_data <- import_stox(path = b_path, line_info = line_info, report_type = "Biomass")
-  w_data <- import_stox(path = w_path, line_info = line_info, report_type = "MeanWeight")
+  a_data <- import_stox(
+    path = a_path,
+    line_info = line_info,
+    report_type = "Abundance"
+  )
+  b_data <- import_stox(
+    path = b_path,
+    line_info = line_info,
+    report_type = "Biomass"
+  )
+  w_data <- import_stox(
+    path = w_path,
+    line_info = line_info,
+    report_type = "MeanWeight"
+  )
 
-  # Add biomass and mean weight data to abundance data.frame.
+  # Add biomass and mean weight data to abundance data frame.
   a_data$"Biomass (kg)" <- b_data$Biomass
   a_data$"MeanWeight (g)" <- w_data$MeanWeight
 

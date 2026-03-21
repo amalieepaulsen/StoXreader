@@ -11,7 +11,7 @@
 #' @importFrom dplyr pull
 #' @examples
 #' path <- system.file(
-#'   "stox_winter_2019/2_EstimateByPopulationCategory_Reports_Abundance.txt",
+#'   "extdata/stox_winter_2019/2_EstimateByPopulationCategory_Reports_Abundance.txt",
 #'   package = "StoXreader")
 #'
 #' stox_vector(path)

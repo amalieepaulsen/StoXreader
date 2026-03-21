@@ -21,7 +21,7 @@
 #' @import dplyr
 #' @examples
 #' path <- system.file(
-#'   "stox_winter_2019/2_EstimateByPopulationCategory_Reports_Abundance.txt",
+#'   "extdata/stox_winter_2019/2_EstimateByPopulationCategory_Reports_Abundance.txt",
 #'   package = "StoXreader")
 #' line_info <- data.frame(
 #'   n_skip = c(9, 51, 93, 135),
@@ -55,12 +55,12 @@ import_stox <- function(path, line_info, report_type) {
       dplyr::filter(grepl("-", .data$LenGrp))
 
     complete_df <- small_df |>
-      dplyr::mutate(stratum = rep(line_info[i, 3], each = nrow(small_df)))
+      dplyr::mutate(Stratum = rep(line_info[i, 3], each = nrow(small_df)))
 
     output_df <- dplyr::bind_rows(output_df, complete_df)
   }
   output_df |>
-    dplyr::relocate(.data$stratum, .after = dplyr::last_col()) |>
+    dplyr::relocate(.data$Stratum, .after = dplyr::last_col()) |>
     tidyr::pivot_longer(
       cols = colnames(output_df)[2]:colnames(output_df)[ncol(output_df)],
       names_to = "Age", values_to = report_type,
