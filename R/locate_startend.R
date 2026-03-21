@@ -1,7 +1,7 @@
 #' Locate start or end points of tables in StoX report file based on distinct
 #' strings
 #' @description
-#' locate_startend() is a function within find_all_strata() that takes a
+#' locate_startend() is a nested function in find_all_strata() that takes a
 #' character vector, string, and n_distance given by find_all_strata(), then
 #' passes row numbers back to find_all_strata().
 #' @param vector Character vector with identifiable strings.
@@ -15,7 +15,7 @@
 #' @examples
 #' vector <- c("LenGrp", NA, "__", "10-15", "LenGrp", "15-20", "___", "LenGrp")
 #' string <- "LenGrp"
-#' n_distance <- 0
+#' n_distance <- 1
 #'
 #' locate_startend(vector, string, n_distance)
 #' @export

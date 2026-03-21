@@ -2,7 +2,10 @@
 
 export(find_all_strata)
 export(locate_startend)
+export(read_stox)
+export(stox_vector)
 import(dplyr)
+importFrom(dplyr,pull)
 importFrom(readr,col_character)
 importFrom(readr,col_integer)
 importFrom(readr,cols)
