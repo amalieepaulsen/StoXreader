@@ -1,6 +1,6 @@
 Package: StoXreader
 Type: Package
-Title: Reading and Printing StoX Data
+Title: Read StoX Estimate Reports
 Version: 0.1.0
 Authors@R: c(
     person(
@@ -9,8 +9,8 @@ Authors@R: c(
       role = c("aut", "cre")
     )
   )
-Description: More about what it does (maybe more than one line).
-    Continuation lines should be indented.
+Description: The StoXreader package was built to be able to smoothly import and
+    combine StoX estimate reports from the Institute of Marine Research. 
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
