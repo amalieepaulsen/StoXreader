@@ -27,3 +27,5 @@ Imports:
     stringr,
     tidyr,
     utils
+Depends: 
+    R (>= 3.5)
