@@ -55,7 +55,7 @@ import_stox <- function(path, line_info, report_type) {
       dplyr::filter(grepl("-", .data$LenGrp))
 
     complete_df <- small_df |>
-      dplyr::mutate(Stratum = rep(line_info[i, 3], each = nrow(small_df)))
+      dplyr::mutate(Stratum = rep(as.character(line_info[i, 3]), each = nrow(small_df)))
 
     output_df <- dplyr::bind_rows(output_df, complete_df)
   }
@@ -63,6 +63,7 @@ import_stox <- function(path, line_info, report_type) {
     dplyr::relocate(.data$Stratum, .after = dplyr::last_col()) |>
     tidyr::pivot_longer(
       cols = colnames(output_df)[2]:colnames(output_df)[ncol(output_df)],
-      names_to = "Age", values_to = report_type,
-      names_transform = list(age = as.numeric))
+      names_to = "Age", values_to = report_type
+    ) |>
+    dplyr::mutate(Age = as.numeric(.data$Age))
 }

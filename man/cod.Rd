@@ -12,7 +12,7 @@ A data frame with 16225 rows and 7 variables:
   \item{Age}{age group}
   \item{Abundance}{number of individuals}
   \item{Biomass (kg)}{biomass value in kilograms}
-  \item{MeanWeight (g)}{mean weight value in grams}
+  \item{Mean Weight (g)}{mean weight value in grams}
   \item{Year}{survey year}
 }
 }

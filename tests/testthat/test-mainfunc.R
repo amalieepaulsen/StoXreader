@@ -9,7 +9,7 @@ test_that("test mainfunc 2019", {
     "extdata/stox_winter_2019/2_EstimateByPopulationCategory_Reports_MeanWeight.txt",
     package = "StoXreader")
   x <- read_stox(a_path, b_path, w_path)
-  expect_equal(x$Abundance[1], 86)
+  expect_equal(x$Stratum[1], "1")
 })
 
 test_that("test mainfunc 2009", {
@@ -37,5 +37,5 @@ test_that("test mainfunc 1999", {
     "extdata/stox_winter_1999/2_EstimateByPopulationCategory_Reports_MeanWeight.txt",
     package = "StoXreader")
   x <- read_stox(a_path, b_path, w_path)
-  expect_equal(x$Abundance[1], 3157)
+  expect_equal(x$Biomass[1], 52.5)
 })

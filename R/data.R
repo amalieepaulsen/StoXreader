@@ -10,7 +10,7 @@
 #'   \item{Age}{age group}
 #'   \item{Abundance}{number of individuals}
 #'   \item{Biomass (kg)}{biomass value in kilograms}
-#'   \item{MeanWeight (g)}{mean weight value in grams}
+#'   \item{Mean Weight (g)}{mean weight value in grams}
 #'   \item{Year}{survey year}
 #' }
 #' @source \url{https://metadata.nmdc.no/metadata-api/landingpage/4abaafc79163a4ffed0b2ec7f2aca002}

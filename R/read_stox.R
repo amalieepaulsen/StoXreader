@@ -1,17 +1,18 @@
-#' Read StoX report files
+#' Read StoX estimate report files
 #' @description
-#' Publicly available StoX files for Barents Sea Northeast Arctic cod bottom
-#' trawl index in winter are divided into strata. The way these files are
-#' formatted makes them require additional inputs to be converted into data
-#' frames.
+#' Publicly available StoX estimate reports for Barents Sea Northeast Arctic cod
+#' are divided into strata. The way these files are formatted makes them require
+#' additional inputs to be converted into data frames.
 #'
-#' The three files in ~/output/baseline/report are reports on abundance,
-#' biomass, and mean weight. read_stox() takes these three files, imports them,
-#' then merges them into a single data frame.
+#' If downloaded from NMDC, the three files in ~/output/baseline/report are
+#' reports on abundance, biomass, and mean weight. read_stox() takes these three
+#' files, imports them, then merges them into a single data frame, given that
+#' the names of the txt files themselves have not been changed.
 #' @param a_path Path to abundance txt file.
 #' @param b_path Path to biomass txt file.
 #' @param w_path Path to mean weight txt file.
-#' @returns A `data.frame`
+#' @returns A `data.frame` with length group, stratum number, age, abundance,
+#' biomass, and mean weight.
 #' @importFrom tidyr drop_na
 #' @importFrom rlang .data
 #' @examples
@@ -71,7 +72,7 @@ read_stox <- function(a_path, b_path, w_path) {
 
   # Add biomass and mean weight data to abundance data frame.
   a_data$"Biomass (kg)" <- b_data$Biomass
-  a_data$"MeanWeight (g)" <- w_data$MeanWeight
+  a_data$"Mean Weight (g)" <- w_data$MeanWeight
 
   as.data.frame(a_data) |>
     tidyr::drop_na(.data$Abundance)

@@ -2,7 +2,7 @@
 % Please edit documentation in R/read_stox.R
 \name{read_stox}
 \alias{read_stox}
-\title{Read StoX report files}
+\title{Read StoX estimate report files}
 \usage{
 read_stox(a_path, b_path, w_path)
 }
@@ -14,17 +14,18 @@ read_stox(a_path, b_path, w_path)
 \item{w_path}{Path to mean weight txt file.}
 }
 \value{
-A `data.frame`
+A `data.frame` with length group, stratum number, age, abundance,
+biomass, and mean weight.
 }
 \description{
-Publicly available StoX files for Barents Sea Northeast Arctic cod bottom
-trawl index in winter are divided into strata. The way these files are
-formatted makes them require additional inputs to be converted into data
-frames.
+Publicly available StoX estimate reports for Barents Sea Northeast Arctic cod
+are divided into strata. The way these files are formatted makes them require
+additional inputs to be converted into data frames.
 
-The three files in ~/output/baseline/report are reports on abundance,
-biomass, and mean weight. read_stox() takes these three files, imports them,
-then merges them into a single data frame.
+If downloaded from NMDC, the three files in ~/output/baseline/report are
+reports on abundance, biomass, and mean weight. read_stox() takes these three
+files, imports them, then merges them into a single data frame, given that
+the names of the txt files themselves have not been changed.
 }
 \examples{
 a_path <- system.file(
