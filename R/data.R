@@ -7,7 +7,7 @@
 #' \describe{
 #'   \item{LenGrp}{length group}
 #'   \item{Stratum}{stratum number}
-#'   \item{Age}{age group}
+#'   \item{Age}{age in years}
 #'   \item{Abundance}{number of individuals}
 #'   \item{Biomass (kg)}{biomass value in kilograms}
 #'   \item{Mean Weight (g)}{mean weight value in grams}
