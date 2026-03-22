@@ -65,8 +65,3 @@ head(read_stox(a_path, b_path, w_path))
 #> 5  20-25       1   2       129          8.2            63.4
 #> 6  25-30       1   2        59          7.4           125.0
 ```
-
-StoXreader includes two simple functions to visualize weight-at-age. The
-example below shows how weight_age_y() is used. The data included in the
-package, “cod”, can be explored and visualized with the help of other
-packages or base R functions.
